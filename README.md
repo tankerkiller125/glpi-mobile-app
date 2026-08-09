@@ -57,7 +57,7 @@ useful, honest about its limits, and looking for real-world feedback.
 
 ```sh
 cd /var/www/glpi/plugins
-git clone https://github.com/tankerkiller125/glpimobile.git glpimobile
+git clone https://github.com/tankerkiller125/glpi-mobile-plugin.git glpimobile
 ```
 
 Then *Setup → Plugins → GLPI Mobile → Install → Enable*. The directory **must**
@@ -67,7 +67,7 @@ live in that repository's README.
 
 ### 2. Install the app
 
-Grab an APK from [Releases](https://github.com/tankerkiller125/glpi-mobile/releases),
+Grab an APK from [Releases](https://github.com/tankerkiller125/glpi-mobile-app/releases),
 or [build it yourself](#building-from-source). There is no Play Store or App
 Store listing yet.
 

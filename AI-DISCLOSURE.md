@@ -14,7 +14,7 @@ decided what was good enough to keep. But the characters in these files were, in
 the overwhelming majority, produced by a model rather than typed by a person.
 
 The same is true of the companion GLPI plugin,
-[glpimobile](https://github.com/tankerkiller125/glpimobile).
+[glpimobile](https://github.com/tankerkiller125/glpi-mobile-plugin).
 
 ## What that means in practice
 

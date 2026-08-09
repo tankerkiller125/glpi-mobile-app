@@ -9,7 +9,7 @@ All notable changes to this project are documented here. The format follows
 ## [0.1.0] — 2026-08-08
 
 First public release. Requires GLPI 11.0+ and the
-[`glpimobile`](https://github.com/tankerkiller125/glpimobile) plugin.
+[`glpimobile`](https://github.com/tankerkiller125/glpi-mobile-plugin) plugin.
 
 ### Added
 
@@ -53,5 +53,5 @@ First public release. Requires GLPI 11.0+ and the
 - Release builds are debug-signed until `android/key.properties` is supplied.
 - No independent security review; no production deployment at scale.
 
-[Unreleased]: https://github.com/tankerkiller125/glpi-mobile/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/tankerkiller125/glpi-mobile/releases/tag/v0.1.0
+[Unreleased]: https://github.com/tankerkiller125/glpi-mobile-app/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/tankerkiller125/glpi-mobile-app/releases/tag/v0.1.0
