@@ -472,10 +472,10 @@ writing against this API:
 - **iOS is unverified at runtime.** It now compiles in CI on every push, so the
   Xcode project and the APNs plumbing are known to build — but the app has never
   been *run* on Apple hardware, and APNs delivery is untested end-to-end.
-- **Two build warnings are upstream and cannot be fixed here.** `mobile_scanner`
-  and `unifiedpush_android` still apply the Kotlin Gradle Plugin, and `webcrypto`
-  does not support Swift Package Manager. Flutter warns that both will become
-  build errors in a future release; the fixes belong to those packages.
+- **One build warning is upstream and cannot be fixed here.** `mobile_scanner`
+  and `unifiedpush_android` still apply the Kotlin Gradle Plugin, which Flutter
+  warns will become a build error in a future release. The fix belongs to those
+  packages.
 - **Push was not re-verified on a device after the Firebase 4 /
   flutter_local_notifications 22 upgrade.** It compiles, analyzes and tests
   clean, but the delivery path (UnifiedPush, FCM, the killed-app background
