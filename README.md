@@ -24,7 +24,7 @@ connection comes back.
 > means, what was verified and how, and what you should check yourself.
 
 It needs a companion GLPI plugin —
-**[glpimobile](https://github.com/tankerkiller125/glpimobile)** — which is what
+**[GLPI Mobile Plugin](https://github.com/tankerkiller125/glpi-mobile-plugin)** — which is what
 makes passwordless pairing, push notifications and the endpoints GLPI's REST API
 doesn't publish possible.
 
@@ -46,7 +46,7 @@ useful, honest about its limits, and looking for real-world feedback.
 | | |
 | --- | --- |
 | **Server** | GLPI **11.0** or newer, with the high-level API enabled (*Setup → General → API*) |
-| **Plugin** | [`glpimobile`](https://github.com/tankerkiller125/glpimobile) installed and active |
+| **Plugin** | https://github.com/tankerkiller125/glpi-mobile-plugin installed and active |
 | **Android** | 7.0+ (API 24). Camera permission for QR pairing; notification permission for push |
 | **iOS** | 13+. Requires a Mac and an Apple developer account to build; APNs for push |
 | **Build** | Flutter 3.44+ / Dart 3.12+, JDK 21, Android SDK with `platforms;android-37.0` |
@@ -406,7 +406,7 @@ keystore before the first release anyone else installs.
 ## Development
 
 You need a GLPI 11 server with the
-[`glpimobile`](https://github.com/tankerkiller125/glpimobile) plugin installed;
+[glpi mobile plugin](https://github.com/tankerkiller125/glpi-mobile-plugin) installed;
 any instance works. The targets below assume the Dockerised dev instance this
 app was built against, at `http://localhost:8081` — which is
 `http://10.0.2.2:8081` from an Android emulator, since the emulator reaches the
