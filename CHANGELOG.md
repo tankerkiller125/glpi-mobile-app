@@ -6,6 +6,25 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Minimum iOS version is now 15.0** (was 13.0). Firebase's iOS SDK 12, which
+  `firebase_core` 4 and `firebase_messaging` 16 build on, sets that floor.
+- Upgraded `firebase_core` 3 → 4, `firebase_messaging` 15 → 16 and
+  `flutter_local_notifications` 18 → 22, whose `initialize()` and `show()` moved
+  to named parameters. Everything else was already at the newest version its
+  constraints allow.
+- Added `cupertino_icons`, which `flutter_quill` needs for the Cupertino glyphs
+  it reaches; without it those icons would have rendered as empty boxes.
+
+### Fixed
+
+- iOS builds failed outright: `AppDelegate.swift` used the iOS 14+ `.banner`
+  presentation option against a lower deployment target. The iOS target now
+  compiles in CI on every push.
+- Android builds failed on any machine but one: `android/gradle.properties`
+  pinned `org.gradle.java.home` to a developer's home directory.
+
 ## [0.1.0] — 2026-08-08
 
 First public release. Requires GLPI 11.0+ and the

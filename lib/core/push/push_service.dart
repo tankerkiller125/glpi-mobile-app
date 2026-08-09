@@ -54,10 +54,12 @@ Future<void> _showTicketNotification(
 ) async {
   final ticketId = (data['ticket_id'] as num?)?.toInt();
   await local.show(
-    ticketId ?? 0,
-    (data['title'] as String?) ?? 'GLPI',
-    (data['body'] as String?) ?? '',
-    const NotificationDetails(android: _androidNotifDetails),
+    id: ticketId ?? 0,
+    title: (data['title'] as String?) ?? 'GLPI',
+    body: (data['body'] as String?) ?? '',
+    notificationDetails: const NotificationDetails(
+      android: _androidNotifDetails,
+    ),
     payload: ticketId?.toString(),
   );
 }
@@ -70,7 +72,7 @@ Future<void> _showTicketNotification(
 Future<void> unifiedPushBackgroundMain() async {
   final local = FlutterLocalNotificationsPlugin();
   await local.initialize(
-    const InitializationSettings(
+    settings: const InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     ),
   );
@@ -341,7 +343,7 @@ class PushService {
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     );
     await _local.initialize(
-      settings,
+      settings: settings,
       onDidReceiveNotificationResponse: (response) {
         final id = int.tryParse(response.payload ?? '');
         if (id != null) unawaited(_openTicket(id));
