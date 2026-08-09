@@ -465,8 +465,14 @@ writing against this API:
 
 ## Known limitations
 
-- **iOS is unverified.** The code is written, but nothing has been built or run
-  on Apple hardware; APNs delivery in particular is untested end-to-end.
+- **iOS is unverified at runtime.** It now compiles in CI on every push, so the
+  Xcode project and the APNs plumbing are known to build — but the app has never
+  been *run* on Apple hardware, and APNs delivery is untested end-to-end.
+- **Two build warnings are upstream and cannot be fixed here.** Some plugins
+  (`mobile_scanner`, `unifiedpush_android`, `webcrypto`) still apply the Kotlin
+  Gradle Plugin, and some (`flutter_local_notifications`, `webcrypto`) do not
+  support Swift Package Manager. Flutter warns that both will become build
+  errors in a future release; the fixes belong to those packages.
 - **Localization is partial.** English and French exist, but screens added after
   the Assistance module are English-only pending an `.arb` sweep.
 - **Release builds are debug-signed** until you supply `key.properties`.
