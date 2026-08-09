@@ -1,0 +1,132 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Pinned to the version the app is developed against, so CI fails on our code
+# and not on a Flutter release we have not looked at yet. Bump deliberately.
+env:
+  FLUTTER_VERSION: '3.44.9'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Format, analyze, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --set-exit-if-changed lib test
+
+      - name: Analyze
+        run: flutter analyze
+
+      # Live tests (-t live) are skipped by default: they need a real GLPI
+      # server with the glpimobile plugin installed.
+      - name: Test
+        run: flutter test
+
+  android:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*', 'android/gradle/wrapper/gradle-wrapper.properties', 'pubspec.lock') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      - run: flutter pub get
+
+      # flutter_secure_storage 11 compiles against SDK 37; the package name is
+      # minor-versioned ("android-37.0"), plain "android-37" does not exist.
+      - name: Install Android SDK 37
+        run: ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platforms;android-37.0"
+
+      - name: Build
+        run: flutter build apk --debug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: glpi-mobile-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+
+  ios:
+    name: Build iOS (unsigned)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/CocoaPods
+            ios/Pods
+          key: pods-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pods-${{ runner.os }}-
+
+      - run: flutter pub get
+
+      # No Apple certificate is needed to prove the iOS project still compiles:
+      # this builds the app and links every plugin (including the APNs code in
+      # AppDelegate.swift), it just does not sign the result.
+      - name: Build
+        run: flutter build ios --release --no-codesign
+
+      # A Payload/ zip of the .app is an unsigned IPA: useless to a stock
+      # iPhone, but installable with your own signing tools and proof that the
+      # archive layout is intact.
+      - name: Package unsigned IPA
+        run: |
+          set -euo pipefail
+          mkdir -p build/ios/unsigned/Payload
+          cp -R build/ios/iphoneos/Runner.app build/ios/unsigned/Payload/
+          (cd build/ios/unsigned && zip -qry glpi-mobile-unsigned.ipa Payload)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: glpi-mobile-unsigned-ipa
+          path: build/ios/unsigned/glpi-mobile-unsigned.ipa
+          if-no-files-found: error

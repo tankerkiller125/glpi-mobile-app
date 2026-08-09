@@ -1,0 +1,64 @@
+name: Bug report
+description: Something in the app misbehaves
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Security problems go through [private reporting](../../security/policy),
+        not here.
+
+        **If a part of a screen went blank or grey**, that is a widget throwing:
+        the app renders "This part didn't load" with the exception. Please paste
+        that text — it usually names the bug outright.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got.
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: App version
+      placeholder: "0.1.0 (from Settings)"
+    validations:
+      required: true
+
+  - type: input
+    id: glpi
+    attributes:
+      label: GLPI and plugin version
+      placeholder: "GLPI 11.0.8, glpimobile 0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device and OS
+      placeholder: "Pixel 7, Android 15"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: connectivity
+    attributes:
+      label: Was the device online?
+      options:
+        - Online
+        - Offline
+        - It changed during the action
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error text or logs
+      description: The inline error message, a screenshot, or `adb logcat` output.
+      render: text

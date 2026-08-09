@@ -1,0 +1,80 @@
+[
+    {
+        "type": "Followup",
+        "item": {
+            "id": 9,
+            "itemtype": "Ticket",
+            "items_id": 3,
+            "content": "Billed on ERPNext invoice ACC-SINV-2026-00002 (billing run MSP-RUN-2026-00001, period 2026-07-01 to 2026-07-31)",
+            "is_private": true,
+            "date": "2026-08-03T22:01:07+00:00",
+            "date_creation": "2026-08-03T22:01:07+00:00",
+            "date_mod": "2026-08-03T22:01:07+00:00",
+            "timeline_position": 1,
+            "source_item_id": 0,
+            "source_of_item_id": 0,
+            "user": {
+                "id": 2,
+                "name": "glpi"
+            },
+            "user_editor": null,
+            "request_type": null
+        }
+    },
+    {
+        "type": "Task",
+        "item": {
+            "id": 4,
+            "uuid": "232a95c8-54d5-415b-9909-e96e4f669f08",
+            "content": "Work on: Server migration",
+            "is_private": false,
+            "date": "2026-07-05T10:00:00+00:00",
+            "date_creation": "2026-08-03T21:53:44+00:00",
+            "date_mod": "2026-08-03T21:53:44+00:00",
+            "duration": 21600,
+            "planned_begin": null,
+            "planned_end": null,
+            "state": 1,
+            "timeline_position": 1,
+            "tickets_id": 3,
+            "source_item_id": 0,
+            "source_of_item_id": 0,
+            "user": {
+                "id": 2,
+                "name": "glpi"
+            },
+            "user_editor": null,
+            "user_tech": null,
+            "group_tech": null,
+            "category": null
+        }
+    },
+    {
+        "type": "Task",
+        "item": {
+            "id": 5,
+            "uuid": "e7d7d0b6-9a81-4d7e-8631-717e9e9434c5",
+            "content": "Work on: Server migration",
+            "is_private": false,
+            "date": "2026-07-06T10:00:00+00:00",
+            "date_creation": "2026-08-03T21:53:45+00:00",
+            "date_mod": "2026-08-03T21:53:45+00:00",
+            "duration": 14400,
+            "planned_begin": null,
+            "planned_end": null,
+            "state": 1,
+            "timeline_position": 1,
+            "tickets_id": 3,
+            "source_item_id": 0,
+            "source_of_item_id": 0,
+            "user": {
+                "id": 2,
+                "name": "glpi"
+            },
+            "user_editor": null,
+            "user_tech": null,
+            "group_tech": null,
+            "category": null
+        }
+    }
+]

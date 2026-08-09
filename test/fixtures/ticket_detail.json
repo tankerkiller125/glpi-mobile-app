@@ -1,0 +1,86 @@
+{
+    "id": 3,
+    "name": "Server migration",
+    "content": "Test ticket: Server migration",
+    "is_deleted": false,
+    "urgency": 3,
+    "impact": 3,
+    "priority": 2,
+    "actiontime": 36000,
+    "begin_waiting_date": null,
+    "waiting_duration": 0,
+    "resolution_duration": 0,
+    "close_duration": 0,
+    "resolution_date": null,
+    "date_creation": "2026-08-03T21:53:44+00:00",
+    "date_mod": "2026-08-07T13:13:00+00:00",
+    "date": "2026-08-03T21:53:44+00:00",
+    "date_solve": null,
+    "date_close": null,
+    "type": 1,
+    "external_id": null,
+    "take_into_account_date": "2026-08-03T21:53:44+00:00",
+    "take_into_account_duration": 1,
+    "sla_waiting_duration": 0,
+    "ola_waiting_duration": 0,
+    "ola_ttr_begin_date": null,
+    "ola_tto_begin_date": null,
+    "internal_resolution_date": null,
+    "internal_take_into_account_date": null,
+    "global_validation": 1,
+    "status": {
+        "id": 1,
+        "name": "New"
+    },
+    "user_recipient": {
+        "id": 2,
+        "name": "glpi"
+    },
+    "user_editor": {
+        "id": 2,
+        "name": "glpi"
+    },
+    "category": {
+        "id": 1,
+        "name": "Hardware"
+    },
+    "location": null,
+    "request_type": {
+        "id": 1,
+        "name": "Helpdesk"
+    },
+    "sla_ttr": null,
+    "sla_tto": null,
+    "ola_ttr": null,
+    "ola_tto": null,
+    "sla_level_ttr": null,
+    "ola_level_ttr": null,
+    "entity": {
+        "id": 2,
+        "name": "Beta Industries",
+        "completename": "Root entity > Beta Industries"
+    },
+    "costs": [],
+    "team": [
+        {
+            "role": "assigned",
+            "name": "glpi",
+            "realname": null,
+            "firstname": null,
+            "display_name": "glpi",
+            "id": 2,
+            "href": "/front/user.form.php?id=2",
+            "type": "User"
+        },
+        {
+            "role": "assigned",
+            "name": "glpi",
+            "realname": null,
+            "firstname": null,
+            "display_name": "glpi",
+            "id": 2,
+            "href": "/front/user.form.php?id=2",
+            "type": "User"
+        }
+    ]
+}

@@ -1,0 +1,17 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-raw-types: true
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.drift.dart"
+    - "lib/l10n/generated/**"
+
+linter:
+  rules:
+    - prefer_final_locals
+    - unawaited_futures
+    - directives_ordering
+    - avoid_dynamic_calls

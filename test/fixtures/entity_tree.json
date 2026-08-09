@@ -1,0 +1,35 @@
+[
+    {
+        "key": 0,
+        "label": "Root entity",
+        "children": [
+            {
+                "key": 1,
+                "label": "Acme Corp",
+                "children": []
+            },
+            {
+                "key": 2,
+                "label": "Beta Industries",
+                "children": []
+            },
+            {
+                "key": 4,
+                "label": "Delta Managed",
+                "children": []
+            },
+            {
+                "key": 5,
+                "label": "Epsilon Retail",
+                "children": []
+            },
+            {
+                "key": 3,
+                "label": "Gamma LLC",
+                "children": []
+            }
+        ],
+        "expanded": "true",
+        "selected": "true"
+    }
+]

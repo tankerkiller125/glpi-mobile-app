@@ -1,0 +1,1545 @@
+[
+    {
+        "id": 1,
+        "name": "Email outage",
+        "content": "Test ticket: Email outage",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 4,
+        "actiontime": 10800,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T21:53:44+00:00",
+        "date_mod": "2026-08-03T22:01:07+00:00",
+        "date": "2026-08-03T21:53:44+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T21:53:44+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": {
+            "id": 3,
+            "name": "Network"
+        },
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 1,
+            "name": "Acme Corp",
+            "completename": "Root entity > Acme Corp"
+        },
+        "costs": [],
+        "team": [
+            {
+                "role": "assigned",
+                "name": "glpi",
+                "realname": null,
+                "firstname": null,
+                "display_name": "glpi",
+                "id": 2,
+                "href": "/front/user.form.php?id=2",
+                "type": "User"
+            }
+        ]
+    },
+    {
+        "id": 2,
+        "name": "VPN setup for new hire",
+        "content": "Test ticket: VPN setup for new hire",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 12600,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T21:53:44+00:00",
+        "date_mod": "2026-08-03T22:01:07+00:00",
+        "date": "2026-08-03T21:53:44+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T21:53:44+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": {
+            "id": 5,
+            "name": "Account / Access"
+        },
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 1,
+            "name": "Acme Corp",
+            "completename": "Root entity > Acme Corp"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 3,
+        "name": "Server migration",
+        "content": "Test ticket: Server migration",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 2,
+        "actiontime": 36000,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T21:53:44+00:00",
+        "date_mod": "2026-08-07T13:13:00+00:00",
+        "date": "2026-08-03T21:53:44+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T21:53:44+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": {
+            "id": 1,
+            "name": "Hardware"
+        },
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 2,
+            "name": "Beta Industries",
+            "completename": "Root entity > Beta Industries"
+        },
+        "costs": [],
+        "team": [
+            {
+                "role": "assigned",
+                "name": "glpi",
+                "realname": null,
+                "firstname": null,
+                "display_name": "glpi",
+                "id": 2,
+                "href": "/front/user.form.php?id=2",
+                "type": "User"
+            }
+        ]
+    },
+    {
+        "id": 4,
+        "name": "Firewall rules cleanup",
+        "content": "Test ticket: Firewall rules cleanup",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 5,
+        "actiontime": 9000,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T21:53:45+00:00",
+        "date_mod": "2026-08-03T22:01:07+00:00",
+        "date": "2026-08-03T21:53:45+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T21:53:45+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": {
+            "id": 4,
+            "name": "Security"
+        },
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 2,
+            "name": "Beta Industries",
+            "completename": "Root entity > Beta Industries"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 5,
+        "name": "Office network rewiring",
+        "content": "Test ticket: Office network rewiring",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 43200,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T21:53:45+00:00",
+        "date_mod": "2026-08-03T22:01:07+00:00",
+        "date": "2026-08-03T21:53:45+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T21:53:45+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": {
+            "id": 3,
+            "name": "Network"
+        },
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 3,
+            "name": "Gamma LLC",
+            "completename": "Root entity > Gamma LLC"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 6,
+        "name": "Switch replacement",
+        "content": "Test ticket: Switch replacement",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 7200,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T21:53:45+00:00",
+        "date_mod": "2026-08-03T22:01:07+00:00",
+        "date": "2026-08-03T21:53:45+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T21:53:45+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": {
+            "id": 3,
+            "name": "Network"
+        },
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 3,
+            "name": "Gamma LLC",
+            "completename": "Root entity > Gamma LLC"
+        },
+        "costs": [
+            {
+                "id": 1
+            }
+        ],
+        "team": []
+    },
+    {
+        "id": 7,
+        "name": "Monthly patch window",
+        "content": "Test ticket: Monthly patch window",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 7200,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T21:53:45+00:00",
+        "date_mod": "2026-08-03T22:01:07+00:00",
+        "date": "2026-08-03T21:53:45+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T21:53:45+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 4,
+            "name": "Delta Managed",
+            "completename": "Root entity > Delta Managed"
+        },
+        "costs": [],
+        "team": [
+            {
+                "role": "assigned",
+                "name": "glpi",
+                "realname": null,
+                "firstname": null,
+                "display_name": "glpi",
+                "id": 2,
+                "href": "/front/user.form.php?id=2",
+                "type": "User"
+            }
+        ]
+    },
+    {
+        "id": 8,
+        "name": "Workstation refresh",
+        "content": "Test ticket: Workstation refresh",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 10800,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:24:58+00:00",
+        "date_mod": "2026-08-03T23:24:59+00:00",
+        "date": "2026-08-03T23:24:58+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:24:58+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 5,
+            "name": "Epsilon Retail",
+            "completename": "Root entity > Epsilon Retail"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 9,
+        "name": "Weekend POS outage",
+        "content": "Test ticket: Weekend POS outage",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 7200,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:24:58+00:00",
+        "date_mod": "2026-08-03T23:24:59+00:00",
+        "date": "2026-08-03T23:24:58+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:24:58+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 5,
+            "name": "Epsilon Retail",
+            "completename": "Root entity > Epsilon Retail"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 10,
+        "name": "Database tuning",
+        "content": "Test ticket: Database tuning",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 14400,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:24:58+00:00",
+        "date_mod": "2026-08-03T23:24:59+00:00",
+        "date": "2026-08-03T23:24:58+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:24:58+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 2,
+            "name": "Beta Industries",
+            "completename": "Root entity > Beta Industries"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 11,
+        "name": "Night failover test",
+        "content": "Test ticket: Night failover test",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 21600,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:24:58+00:00",
+        "date_mod": "2026-08-03T23:24:59+00:00",
+        "date": "2026-08-03T23:24:58+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:24:58+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 2,
+            "name": "Beta Industries",
+            "completename": "Root entity > Beta Industries"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 12,
+        "name": "AP survey",
+        "content": "Test ticket: AP survey",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 7200,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:24:58+00:00",
+        "date_mod": "2026-08-03T23:24:59+00:00",
+        "date": "2026-08-03T23:24:58+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:24:58+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 3,
+            "name": "Gamma LLC",
+            "completename": "Root entity > Gamma LLC"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 13,
+        "name": "Saturday office move",
+        "content": "Test ticket: Saturday office move",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 14400,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:24:58+00:00",
+        "date_mod": "2026-08-03T23:24:59+00:00",
+        "date": "2026-08-03T23:24:58+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:24:58+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 3,
+            "name": "Gamma LLC",
+            "completename": "Root entity > Gamma LLC"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 14,
+        "name": "Printer mapping issues",
+        "content": "Printer mapping issues",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 7200,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:24:59+00:00",
+        "date_mod": "2026-08-03T23:25:01+00:00",
+        "date": "2026-08-03T23:24:59+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:24:59+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 5,
+            "name": "Epsilon Retail",
+            "completename": "Root entity > Epsilon Retail"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 15,
+        "name": "VLAN redesign",
+        "content": "VLAN redesign",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 10800,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:24:59+00:00",
+        "date_mod": "2026-08-03T23:25:00+00:00",
+        "date": "2026-08-03T23:24:59+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:24:59+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 3,
+            "name": "Gamma LLC",
+            "completename": "Root entity > Gamma LLC"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 16,
+        "name": "Saturday cutover",
+        "content": "Saturday cutover",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 7200,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:24:59+00:00",
+        "date_mod": "2026-08-03T23:25:01+00:00",
+        "date": "2026-08-03T23:24:59+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:24:59+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 3,
+            "name": "Gamma LLC",
+            "completename": "Root entity > Gamma LLC"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 17,
+        "name": "Core switch install",
+        "content": "Core switch install",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 32400,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:24:59+00:00",
+        "date_mod": "2026-08-03T23:25:01+00:00",
+        "date": "2026-08-03T23:24:59+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:24:59+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 3,
+            "name": "Gamma LLC",
+            "completename": "Root entity > Gamma LLC"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 18,
+        "name": "Server patching",
+        "content": "Server patching",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 7200,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:25:01+00:00",
+        "date_mod": "2026-08-03T23:25:02+00:00",
+        "date": "2026-08-03T23:25:01+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:25:01+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 5,
+            "name": "Epsilon Retail",
+            "completename": "Root entity > Epsilon Retail"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 19,
+        "name": "Router upgrade",
+        "content": "Router upgrade",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 14400,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:25:01+00:00",
+        "date_mod": "2026-08-03T23:25:02+00:00",
+        "date": "2026-08-03T23:25:01+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:25:01+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 3,
+            "name": "Gamma LLC",
+            "completename": "Root entity > Gamma LLC"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 20,
+        "name": "Christmas outage",
+        "content": "Christmas outage",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 7200,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:25:01+00:00",
+        "date_mod": "2026-08-03T23:25:02+00:00",
+        "date": "2026-08-03T23:25:01+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:25:01+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 3,
+            "name": "Gamma LLC",
+            "completename": "Root entity > Gamma LLC"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 21,
+        "name": "January tune-up",
+        "content": "January tune-up",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 7200,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:25:02+00:00",
+        "date_mod": "2026-08-03T23:25:02+00:00",
+        "date": "2026-08-03T23:25:02+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:25:02+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 3,
+            "name": "Gamma LLC",
+            "completename": "Root entity > Gamma LLC"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 22,
+        "name": "February firewall audit",
+        "content": "February firewall audit",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 10800,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:25:02+00:00",
+        "date_mod": "2026-08-03T23:25:03+00:00",
+        "date": "2026-08-03T23:25:02+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:25:02+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 3,
+            "name": "Gamma LLC",
+            "completename": "Root entity > Gamma LLC"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 23,
+        "name": "Emergency NAS failure",
+        "content": "Emergency NAS failure",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 18000,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:25:04+00:00",
+        "date_mod": "2026-08-03T23:50:53+00:00",
+        "date": "2026-08-03T23:25:04+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:25:04+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 3,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 4,
+            "name": "Delta Managed",
+            "completename": "Root entity > Delta Managed"
+        },
+        "costs": [],
+        "team": []
+    },
+    {
+        "id": 25,
+        "name": "October infrastructure maintenance",
+        "content": "x",
+        "is_deleted": false,
+        "urgency": 3,
+        "impact": 3,
+        "priority": 3,
+        "actiontime": 50400,
+        "begin_waiting_date": null,
+        "waiting_duration": 0,
+        "resolution_duration": 0,
+        "close_duration": 0,
+        "resolution_date": null,
+        "date_creation": "2026-08-03T23:56:30+00:00",
+        "date_mod": "2026-08-03T23:56:30+00:00",
+        "date": "2026-08-03T23:56:30+00:00",
+        "date_solve": null,
+        "date_close": null,
+        "type": 1,
+        "external_id": null,
+        "take_into_account_date": "2026-08-03T23:56:30+00:00",
+        "take_into_account_duration": 1,
+        "sla_waiting_duration": 0,
+        "ola_waiting_duration": 0,
+        "ola_ttr_begin_date": null,
+        "ola_tto_begin_date": null,
+        "internal_resolution_date": null,
+        "internal_take_into_account_date": null,
+        "global_validation": 1,
+        "status": {
+            "id": 1,
+            "name": "New"
+        },
+        "user_recipient": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "user_editor": {
+            "id": 2,
+            "name": "glpi"
+        },
+        "category": null,
+        "location": null,
+        "request_type": {
+            "id": 1,
+            "name": "Helpdesk"
+        },
+        "sla_ttr": null,
+        "sla_tto": null,
+        "ola_ttr": null,
+        "ola_tto": null,
+        "sla_level_ttr": null,
+        "ola_level_ttr": null,
+        "entity": {
+            "id": 2,
+            "name": "Beta Industries",
+            "completename": "Root entity > Beta Industries"
+        },
+        "costs": [],
+        "team": []
+    }
+]
