@@ -59,7 +59,13 @@ import UserNotifications
     willPresent notification: UNNotification,
     withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
   ) {
-    completionHandler([.banner, .sound])
+    // .banner is iOS 14+; .alert is its deprecated equivalent and the only
+    // option on iOS 13, which this app still supports.
+    if #available(iOS 14.0, *) {
+      completionHandler([.banner, .list, .sound])
+    } else {
+      completionHandler([.alert, .sound])
+    }
   }
 
   // Tap → deep-link to the ticket (the payload carries ticket_id).
