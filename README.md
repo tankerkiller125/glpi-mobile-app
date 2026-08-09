@@ -341,7 +341,7 @@ EOF
 ### iOS
 
 Building for iOS needs a Mac with Xcode. The APNs plumbing is written
-(`AppDelegate.swift`, a `tech.norsewave.glpi/push` method channel,
+(`AppDelegate.swift`, a `com.tankerkiller125.glpi/push` method channel,
 `Runner.entitlements`, the background mode) but has **not** been built or
 verified on a real device — see [Known limitations](#known-limitations). Enable
 the *Push Notifications* and *Background Modes → Remote notifications*
@@ -396,7 +396,7 @@ and an unsigned IPA rather than failing.
 | `ANDROID_KEYSTORE_BASE64` | `base64 -w0 upload-keystore.jks` |
 | `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_PASSWORD`, `ANDROID_KEY_ALIAS` | the keystore's credentials |
 | `APPLE_CERTIFICATE_BASE64`, `APPLE_CERTIFICATE_PASSWORD` | a distribution `.p12` and its export password |
-| `APPLE_PROVISIONING_PROFILE_BASE64` | a `.mobileprovision` for `tech.norsewave.glpi` |
+| `APPLE_PROVISIONING_PROFILE_BASE64` | a `.mobileprovision` for `com.tankerkiller125.glpi` |
 | `APPLE_TEAM_ID` | your 10-character Apple team id |
 
 Two optional repository *variables* tune the iOS export: `APPLE_EXPORT_METHOD`
