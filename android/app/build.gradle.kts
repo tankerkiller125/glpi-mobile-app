@@ -22,7 +22,7 @@ val hasReleaseKeystore = keystoreProperties.getProperty("storeFile") != null
 // works against each self-hosted instance's own Firebase project.
 
 android {
-    namespace = "tech.norsewave.glpi"
+    namespace = "com.tankerkiller125.glpi"
     // flutter_secure_storage 11 compiles against SDK 37 (flutter.compileSdkVersion is 36).
     compileSdk = 37
     ndkVersion = flutter.ndkVersion
@@ -35,7 +35,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "tech.norsewave.glpi"
+        applicationId = "com.tankerkiller125.glpi"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

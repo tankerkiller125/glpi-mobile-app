@@ -100,7 +100,7 @@ class PushService {
   String? _endpoint;
 
   /// Native bridge for iOS APNs (the token + notification taps come from Swift).
-  static const _iosChannel = MethodChannel('tech.norsewave.glpi/push');
+  static const _iosChannel = MethodChannel('com.tankerkiller125.glpi/push');
 
   /// Register for push once the account is authenticated. Idempotent.
   Future<void> start() async {
