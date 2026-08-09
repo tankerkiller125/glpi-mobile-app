@@ -59,7 +59,7 @@ import UserNotifications
     willPresent notification: UNNotification,
     withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
   ) {
-    completionHandler([.banner, .sound])
+    completionHandler([.banner, .list, .sound])
   }
 
   // Tap → deep-link to the ticket (the payload carries ticket_id).

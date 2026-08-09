@@ -51,89 +51,98 @@ List<TicketDto> loadFixtureTickets() {
 
 void main() {
   _pruneTests();
-  late AppDatabase db;
-  late FakeGlpiApi api;
-  late TicketRepository repo;
 
-  setUp(() {
-    db = AppDatabase(NativeDatabase.memory());
-    api = FakeGlpiApi(loadFixtureTickets());
-    repo = TicketRepository(db, api);
-  });
+  // Scoped so this setUp does not also run for the prune group, which opens
+  // its own database: two live AppDatabase instances at once is exactly what
+  // drift warns about.
+  group('TicketRepository', () {
+    late AppDatabase db;
+    late FakeGlpiApi api;
+    late TicketRepository repo;
 
-  tearDown(() => db.close());
+    setUp(() {
+      db = AppDatabase(NativeDatabase.memory());
+      api = FakeGlpiApi(loadFixtureTickets());
+      repo = TicketRepository(db, api);
+    });
 
-  test('refreshQueue upserts all open tickets from the API', () async {
-    final synced = await repo.refreshQueue();
-    expect(synced, greaterThan(0));
-    final items = await repo.watchQueue().first;
-    // Fixture has 24 tickets, all open (status 1).
-    expect(items, hasLength(24));
-    expect(items.every((t) => t.status == 1), isTrue);
-  });
+    tearDown(() => db.close());
 
-  test('team roles map to Mine / Unassigned correctly', () async {
-    await repo.refreshQueue();
-    final items = await repo.watchQueue().first;
-    final assignedToGlpi = items
-        .where((t) => t.assignedToUser(2))
-        .map((t) => t.serverId)
-        .toSet();
-    // Seeded: tickets 1, 3, 7 assigned to user glpi (id 2).
-    expect(assignedToGlpi, containsAll(<int>{1, 3, 7}));
-    final unassigned = items.where((t) => t.isUnassigned).length;
-    expect(unassigned, 24 - assignedToGlpi.length);
-  });
+    test('refreshQueue upserts all open tickets from the API', () async {
+      final synced = await repo.refreshQueue();
+      expect(synced, greaterThan(0));
+      final items = await repo.watchQueue().first;
+      // Fixture has 24 tickets, all open (status 1).
+      expect(items, hasLength(24));
+      expect(items.every((t) => t.status == 1), isTrue);
+    });
 
-  test('re-sync is idempotent (upsert by server id, no duplicates)', () async {
-    await repo.refreshQueue();
-    await repo.refreshQueue();
-    final items = await repo.watchQueue().first;
-    expect(items, hasLength(24));
-    // Team rows replaced, not duplicated.
-    final teamRows = await db.select(db.ticketTeam).get();
-    final ticket3 = items.firstWhere((t) => t.serverId == 3);
-    expect(ticket3.assignedUserIds, contains(2));
-    expect(teamRows.where((m) => m.role == 'assigned'), hasLength(3));
-  });
+    test('team roles map to Mine / Unassigned correctly', () async {
+      await repo.refreshQueue();
+      final items = await repo.watchQueue().first;
+      final assignedToGlpi = items
+          .where((t) => t.assignedToUser(2))
+          .map((t) => t.serverId)
+          .toSet();
+      // Seeded: tickets 1, 3, 7 assigned to user glpi (id 2).
+      expect(assignedToGlpi, containsAll(<int>{1, 3, 7}));
+      final unassigned = items.where((t) => t.isUnassigned).length;
+      expect(unassigned, 24 - assignedToGlpi.length);
+    });
 
-  test('watchQueue emits again after a refresh (reactive)', () async {
-    final emissions = <int>[];
-    final sub = repo.watchQueue().listen(
-      (items) => emissions.add(items.length),
+    test(
+      're-sync is idempotent (upsert by server id, no duplicates)',
+      () async {
+        await repo.refreshQueue();
+        await repo.refreshQueue();
+        final items = await repo.watchQueue().first;
+        expect(items, hasLength(24));
+        // Team rows replaced, not duplicated.
+        final teamRows = await db.select(db.ticketTeam).get();
+        final ticket3 = items.firstWhere((t) => t.serverId == 3);
+        expect(ticket3.assignedUserIds, contains(2));
+        expect(teamRows.where((m) => m.role == 'assigned'), hasLength(3));
+      },
     );
-    await Future<void>.delayed(Duration.zero);
-    await repo.refreshQueue();
-    await Future<void>.delayed(const Duration(milliseconds: 50));
-    await sub.cancel();
-    expect(emissions.last, 24);
-  });
 
-  // --- Push deep-linking helpers ---
+    test('watchQueue emits again after a refresh (reactive)', () async {
+      final emissions = <int>[];
+      final sub = repo.watchQueue().listen(
+        (items) => emissions.add(items.length),
+      );
+      await Future<void>.delayed(Duration.zero);
+      await repo.refreshQueue();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await sub.cancel();
+      expect(emissions.last, 24);
+    });
 
-  test('localIdForServerId returns null before caching, id after', () async {
-    expect(await repo.localIdForServerId(3), isNull);
-    await repo.refreshQueue();
-    final localId = await repo.localIdForServerId(3);
-    expect(localId, isNotNull);
-    final row = await repo.watchTicket(localId!).first;
-    expect(row?.serverId, 3);
-  });
+    // --- Push deep-linking helpers ---
 
-  test('openByServerId fetches + caches a not-yet-seen ticket', () async {
-    // Cache miss → fetches via the API and mints a local row.
-    expect(await repo.localIdForServerId(3), isNull);
-    final localId = await repo.openByServerId(3);
-    expect(localId, isNotNull);
-    expect(api.getTicketCalls, 1);
-    // Second call is a cache hit (no extra fetch).
-    final again = await repo.openByServerId(3);
-    expect(again, localId);
-    expect(api.getTicketCalls, 1);
-  });
+    test('localIdForServerId returns null before caching, id after', () async {
+      expect(await repo.localIdForServerId(3), isNull);
+      await repo.refreshQueue();
+      final localId = await repo.localIdForServerId(3);
+      expect(localId, isNotNull);
+      final row = await repo.watchTicket(localId!).first;
+      expect(row?.serverId, 3);
+    });
 
-  test('openByServerId returns null when the fetch fails', () async {
-    expect(await repo.openByServerId(999999), isNull);
+    test('openByServerId fetches + caches a not-yet-seen ticket', () async {
+      // Cache miss → fetches via the API and mints a local row.
+      expect(await repo.localIdForServerId(3), isNull);
+      final localId = await repo.openByServerId(3);
+      expect(localId, isNotNull);
+      expect(api.getTicketCalls, 1);
+      // Second call is a cache hit (no extra fetch).
+      final again = await repo.openByServerId(3);
+      expect(again, localId);
+      expect(api.getTicketCalls, 1);
+    });
+
+    test('openByServerId returns null when the fetch fails', () async {
+      expect(await repo.openByServerId(999999), isNull);
+    });
   });
 }
 

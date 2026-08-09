@@ -11,7 +11,7 @@ spare-time project, not a vendor with an on-call rota, and the response time
 reflects that.
 
 When reporting, please include the GLPI version, the plugin version, whether the
-issue is in the app or the [`glpimobile`](https://github.com/tankerkiller125/glpimobile)
+issue is in the app or the [`glpimobile`](https://github.com/tankerkiller125/glpi-mobile-plugin)
 plugin, and enough detail to reproduce it.
 
 ## Supported versions

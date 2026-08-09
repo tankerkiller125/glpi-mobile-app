@@ -48,7 +48,7 @@ useful, honest about its limits, and looking for real-world feedback.
 | **Server** | GLPI **11.0** or newer, with the high-level API enabled (*Setup → General → API*) |
 | **Plugin** | https://github.com/tankerkiller125/glpi-mobile-plugin installed and active |
 | **Android** | 7.0+ (API 24). Camera permission for QR pairing; notification permission for push |
-| **iOS** | 13+. Requires a Mac and an Apple developer account to build; APNs for push |
+| **iOS** | 15+ (the floor Firebase's iOS SDK sets). Requires a Mac and an Apple developer account to build; APNs for push |
 | **Build** | Flutter 3.44+ / Dart 3.12+, JDK 21, Android SDK with `platforms;android-37.0` |
 
 ## Getting started
@@ -57,7 +57,7 @@ useful, honest about its limits, and looking for real-world feedback.
 
 ```sh
 cd /var/www/glpi/plugins
-git clone https://github.com/tankerkiller125/glpimobile.git glpimobile
+git clone https://github.com/tankerkiller125/glpi-mobile-plugin.git glpimobile
 ```
 
 Then *Setup → Plugins → GLPI Mobile → Install → Enable*. The directory **must**
@@ -67,7 +67,7 @@ live in that repository's README.
 
 ### 2. Install the app
 
-Grab an APK from [Releases](https://github.com/tankerkiller125/glpi-mobile/releases),
+Grab an APK from [Releases](https://github.com/tankerkiller125/glpi-mobile-app/releases),
 or [build it yourself](#building-from-source). There is no Play Store or App
 Store listing yet.
 
@@ -314,6 +314,10 @@ Prerequisites that bite in this project specifically:
   `android/app/build.gradle.kts`; don't remove them or
   `flutter_local_notifications` and UnifiedPush stop building.
 - `flutter build apk | tee log` **masks the real exit code** — check it.
+- **`cmake` must be on `PATH` to run the tests.** `webcrypto` builds a native
+  host asset through CMake, so `flutter test` fails with "Failed to find cmake
+  version: latest" without it. Any system `cmake` works; the Android SDK also
+  ships one at `$ANDROID_HOME/cmake/<version>/bin`.
 
 ### Signing a release build
 
@@ -465,8 +469,17 @@ writing against this API:
 
 ## Known limitations
 
-- **iOS is unverified.** The code is written, but nothing has been built or run
-  on Apple hardware; APNs delivery in particular is untested end-to-end.
+- **iOS is unverified at runtime.** It now compiles in CI on every push, so the
+  Xcode project and the APNs plumbing are known to build — but the app has never
+  been *run* on Apple hardware, and APNs delivery is untested end-to-end.
+- **One build warning is upstream and cannot be fixed here.** `mobile_scanner`
+  and `unifiedpush_android` still apply the Kotlin Gradle Plugin, which Flutter
+  warns will become a build error in a future release. The fix belongs to those
+  packages.
+- **Push was not re-verified on a device after the Firebase 4 /
+  flutter_local_notifications 22 upgrade.** It compiles, analyzes and tests
+  clean, but the delivery path (UnifiedPush, FCM, the killed-app background
+  isolate) has not been exercised on hardware since.
 - **Localization is partial.** English and French exist, but screens added after
   the Assistance module are English-only pending an `.arb` sweep.
 - **Release builds are debug-signed** until you supply `key.properties`.

@@ -19,7 +19,7 @@ make check           # format + analyze + test — must pass before you push
 ```
 
 You need a GLPI 11 server with the
-[`glpimobile`](https://github.com/tankerkiller125/glpimobile) plugin installed to
+[`glpimobile`](https://github.com/tankerkiller125/glpi-mobile-plugin) plugin installed to
 run the app at all. `dev-env/` in the original working tree provisions one with
 Docker; any GLPI 11 instance works.
 

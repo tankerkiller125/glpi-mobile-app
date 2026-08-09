@@ -1,8 +1,8 @@
 name: glpi_mobile
 description: "Offline-first mobile client for GLPI 11 — helpdesk, assets and planning for technicians in the field."
-homepage: https://github.com/tankerkiller125/glpi-mobile
-repository: https://github.com/tankerkiller125/glpi-mobile
-issue_tracker: https://github.com/tankerkiller125/glpi-mobile/issues
+homepage: https://github.com/tankerkiller125/glpi-mobile-app
+repository: https://github.com/tankerkiller125/glpi-mobile-app
+issue_tracker: https://github.com/tankerkiller125/glpi-mobile-app/issues
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -12,10 +12,15 @@ environment:
 dependencies:
   clock: ^1.1.2
   connectivity_plus: ^7.3.1
+  # flutter_quill pulls in Cupertino widgets whose IconData points at the
+  # cupertino_icons font. Without the package the build warns "Expected to find
+  # fonts for (packages/cupertino_icons/CupertinoIcons)" and those glyphs would
+  # render as empty boxes if that code path is ever reached.
+  cupertino_icons: ^1.0.8
   dio: ^5.11.0
   drift: ^2.34.3
-  firebase_core: ^3.8.1
-  firebase_messaging: ^15.1.6
+  firebase_core: ^4.13.0
+  firebase_messaging: ^16.5.0
   drift_flutter: ^0.3.1
   flutter:
     sdk: flutter
@@ -23,7 +28,7 @@ dependencies:
     sdk: flutter
   flutter_riverpod: ^3.3.2
   flutter_secure_storage: ^11.0.0
-  flutter_local_notifications: ^18.0.1
+  flutter_local_notifications: ^22.3.0
   go_router: ^17.4.0
   intl: any # resolved by flutter_localizations
   json_annotation: ^4.12.0
