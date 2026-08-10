@@ -8,6 +8,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Application id is now `com.tankerkiller125.glpi`** (was `tech.norsewave.glpi`)
+  on both platforms, along with the Kotlin package, the iOS bundle ids and the
+  `…/push` method channel. Anyone running FCM must register a new Android app
+  under the new package name — a token minted for the old one is not deliverable
+  — and set the APNs bundle id in the plugin to match.
+
+## [0.2.0] — 2026-08-09
+
+### Changed
+
 - **Minimum iOS version is now 15.0** (was 13.0). Firebase's iOS SDK 12, which
   `firebase_core` 4 and `firebase_messaging` 16 build on, sets that floor.
 - Upgraded `firebase_core` 3 → 4, `firebase_messaging` 15 → 16 and
