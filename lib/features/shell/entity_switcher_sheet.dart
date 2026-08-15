@@ -5,6 +5,7 @@ import '../../core/auth/auth_controller.dart';
 import '../../core/models/entity_node.dart';
 import '../../core/providers.dart';
 import '../../core/utils/layout.dart';
+import '../../core/widgets/section_heading.dart';
 
 /// Switch the working entity (and profile) without signing out.
 ///
@@ -71,9 +72,12 @@ class _EntitySwitcherSheetState extends ConsumerState<EntitySwitcherSheet> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Text(
-                'Working context',
-                style: theme.textTheme.titleMedium,
+              child: Semantics(
+                header: true,
+                child: Text(
+                  'Working context',
+                  style: theme.textTheme.titleMedium,
+                ),
               ),
             ),
             Flexible(
@@ -123,7 +127,16 @@ class _EntitySwitcherSheetState extends ConsumerState<EntitySwitcherSheet> {
                               value: node.id,
                               title: Padding(
                                 padding: EdgeInsets.only(left: depth * 16.0),
-                                child: Text(node.label),
+                                // The tree is expressed purely as indentation,
+                                // which a screen reader cannot see; say the
+                                // depth instead.
+                                child: Semantics(
+                                  label: depth == 0
+                                      ? node.label
+                                      : 'Level ${depth + 1}, ${node.label}',
+                                  excludeSemantics: true,
+                                  child: Text(node.label),
+                                ),
                               ),
                             ),
                         ],
@@ -139,7 +152,11 @@ class _EntitySwitcherSheetState extends ConsumerState<EntitySwitcherSheet> {
                     ),
                     _ => const Padding(
                       padding: EdgeInsets.all(24),
-                      child: Center(child: CircularProgressIndicator()),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          semanticsLabel: 'Loading',
+                        ),
+                      ),
                     ),
                   },
                   SwitchListTile(
@@ -171,7 +188,10 @@ class _EntitySwitcherSheetState extends ConsumerState<EntitySwitcherSheet> {
                         ? const SizedBox(
                             height: 18,
                             width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              semanticsLabel: 'Switching',
+                            ),
                           )
                         : const Text('Switch'),
                   ),
@@ -186,7 +206,7 @@ class _EntitySwitcherSheetState extends ConsumerState<EntitySwitcherSheet> {
 
   Widget _header(ThemeData theme, String text) => Padding(
     padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-    child: Text(text, style: theme.textTheme.labelLarge),
+    child: SectionHeading(text),
   );
 
   static String? _labelFor(List<EntityNode> roots, int? id) {

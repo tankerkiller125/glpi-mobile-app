@@ -55,7 +55,9 @@ class CatalogSearchDelegate extends SearchDelegate<void> {
       ),
       AsyncData(:final value) => _grouped(value),
       AsyncError() => const Center(child: Text('Search needs a connection')),
-      _ => const Center(child: CircularProgressIndicator()),
+      _ => const Center(
+        child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+      ),
     };
   }
 

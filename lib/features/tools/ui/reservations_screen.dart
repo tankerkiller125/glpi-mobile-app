@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/dto/tools_dto.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/formatting.dart';
+import '../../../core/widgets/accessible_refresh.dart';
 import 'reservation_booking.dart';
 
 /// Reservations: browse bookable items and book or cancel a slot. GLPI rejects
@@ -60,7 +61,7 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
           ),
         ),
         Expanded(
-          child: RefreshIndicator(
+          child: AccessibleRefresh(
             onRefresh: () async => ref.invalidate(reservationItemsProvider),
             child: switch (items) {
               AsyncData(:final value) => Builder(
@@ -102,7 +103,9 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
                   Center(child: Text('Reservations need a connection')),
                 ],
               ),
-              _ => const Center(child: CircularProgressIndicator()),
+              _ => const Center(
+                child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+              ),
             },
           ),
         ),
@@ -112,7 +115,7 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
 
   Widget _buildMine() {
     final reservations = ref.watch(reservationsProvider);
-    return RefreshIndicator(
+    return AccessibleRefresh(
       onRefresh: () async => ref.invalidate(reservationsProvider),
       child: switch (reservations) {
         AsyncData(:final value) when value.isEmpty => ListView(
@@ -158,7 +161,9 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
             Center(child: Text('Reservations need a connection')),
           ],
         ),
-        _ => const Center(child: CircularProgressIndicator()),
+        _ => const Center(
+          child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+        ),
       },
     );
   }

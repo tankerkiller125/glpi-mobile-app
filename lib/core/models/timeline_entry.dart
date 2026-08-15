@@ -44,4 +44,7 @@ class TimelineEntry {
       type == 'solution' ? solutionStatus : validationStatus;
 
   bool get isWaitingApproval => approvalStatus == 2;
+
+  /// Written locally and still queued in the outbox — GLPI hasn't seen it yet.
+  bool get isPending => serverId == null;
 }

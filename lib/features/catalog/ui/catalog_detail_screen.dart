@@ -13,8 +13,10 @@ import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/formatting.dart';
 import '../../../core/utils/html_text.dart';
+import '../../../core/widgets/accessible_refresh.dart';
 import '../../../core/widgets/due_badge.dart';
 import '../../../core/widgets/info_tile.dart';
+import '../../../core/widgets/section_heading.dart';
 import '../../ticket/ui/attachments_section.dart';
 import '../../ticket/ui/compose_sheet.dart';
 import '../../ticket/ui/option_sheet.dart';
@@ -56,7 +58,11 @@ class _CatalogDetailScreenState extends ConsumerState<CatalogDetailScreen> {
       ..watch(locationsProvider);
     final item = ref.watch(catalogItemProvider(widget.localId)).value;
     if (item == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+        ),
+      );
     }
     if (!_loadedOnce) {
       _loadedOnce = true;
@@ -88,7 +94,7 @@ class _CatalogDetailScreenState extends ConsumerState<CatalogDetailScreen> {
             ),
         ],
       ),
-      body: RefreshIndicator(
+      body: AccessibleRefresh(
         onRefresh: () async {
           ref.invalidate(
             catalogDetailLoadProvider((
@@ -557,7 +563,7 @@ class _ItilSection extends ConsumerWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 8, bottom: 4),
-          child: Text('Tickets', style: Theme.of(context).textTheme.labelLarge),
+          child: const SectionHeading('Tickets'),
         ),
         if (links.isEmpty)
           Text(

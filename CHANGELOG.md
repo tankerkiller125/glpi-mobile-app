@@ -6,6 +6,41 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **An accessibility pass over the whole app.** Screen-reader semantics, contrast
+  and large-text behaviour are now part of the shared widgets rather than
+  per-screen afterthoughts. See [docs/accessibility.md](docs/accessibility.md).
+  - Semantic colours (status, priority, SLA, planning) are re-derived through a
+    new `ensureContrast`/`AccentColors` helper wherever they are drawn as text or
+    as a meaningful mark, so they clear WCAG AA (4.5:1) and 3:1 respectively in
+    both themes. Several shipped colours were close to 2:1 as a label.
+  - Cards, detail rows and list tiles read as one sentence instead of a run of
+    fragments, and the abbreviated forms (`4h`, `in 3h 20m`, `1h 30m`) are
+    expanded for the reader.
+  - Icon-only controls all carry names; custom tap areas reach the 48dp target;
+    the timeline's task toggle is a real checkbox with checked state.
+  - `AccessibleRefresh` replaces `RefreshIndicator` everywhere, adding a
+    "Refresh" custom action — a screen reader takes over the swipe, so
+    pull-to-refresh was otherwise unreachable.
+  - Connectivity changes, queued replies, discarded changes and scan results are
+    announced; the duration picker's readout is a live region.
+  - Detail rows stack instead of truncating past ~1.4× text scale; chip and date
+    strips grow with the font size.
+  - QR pairing starts on manual code entry when a screen reader is active, and
+    both camera viewfinders are labelled.
+  - Section and sheet titles are marked as headings for heading navigation.
+- 42 new tests covering contrast, spoken labels and the semantics tree,
+  including Flutter's tap-target, labelled-tap-target and text-contrast
+  guidelines in both themes.
+
+### Fixed
+
+- The queue card showed ticket status labels for changes and problems, so a
+  change's status 9 read as "Status 9" instead of "Evaluation".
+- The "PRIVATE" badge used white text in both themes; on the dark theme's light
+  amber that was around 1.7:1. The ink is now chosen per fill.
+
 ### Changed
 
 - **Application id is now `com.tankerkiller125.glpi`** (was `tech.norsewave.glpi`)

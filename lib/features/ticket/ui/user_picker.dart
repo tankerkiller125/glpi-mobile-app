@@ -88,7 +88,9 @@ class _UserPickerState extends ConsumerState<UserPicker> {
                     ],
                   ),
                   AsyncError() => const Center(child: Text('Search failed')),
-                  _ => const Center(child: CircularProgressIndicator()),
+                  _ => const Center(
+                    child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+                  ),
                 },
               ),
             ],

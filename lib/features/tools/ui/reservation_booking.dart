@@ -35,9 +35,12 @@ Future<void> bookReservation(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Reserve ${item.name.isEmpty ? item.itemtype : item.name}',
-              style: Theme.of(context).textTheme.titleMedium,
+            Semantics(
+              header: true,
+              child: Text(
+                'Reserve ${item.name.isEmpty ? item.itemtype : item.name}',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
             const SizedBox(height: 12),
             DateTimeField(

@@ -73,9 +73,12 @@ class _ProjectTaskSheetState extends ConsumerState<ProjectTaskSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              _isEdit ? 'Edit task' : 'New task',
-              style: theme.textTheme.titleMedium,
+            Semantics(
+              header: true,
+              child: Text(
+                _isEdit ? 'Edit task' : 'New task',
+                style: theme.textTheme.titleMedium,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -114,13 +117,26 @@ class _ProjectTaskSheetState extends ConsumerState<ProjectTaskSheet> {
                   ),
                 ),
                 IconButton(
+                  tooltip: 'Decrease progress',
                   icon: const Icon(Icons.remove_circle_outline),
                   onPressed: _percent <= 0
                       ? null
                       : () => setState(() => _percent -= 10),
                 ),
-                Text('$_percent%', style: theme.textTheme.titleMedium),
+                // The number between the two buttons is the value they change;
+                // read alone it is a stray "40%".
+                Semantics(
+                  label: 'Progress',
+                  value: '$_percent percent',
+                  child: ExcludeSemantics(
+                    child: Text(
+                      '$_percent%',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ),
+                ),
                 IconButton(
+                  tooltip: 'Increase progress',
                   icon: const Icon(Icons.add_circle_outline),
                   onPressed: _percent >= 100
                       ? null

@@ -538,8 +538,16 @@ standalone document uploads and opens.
 - Polish pass: any deviations logged below get revisited; localization strings
   for all new screens (the app is EN/FR — mirror every new user-facing string
   into the l10n arb files, which earlier phases must also do — add to each
-  phase's done-check); accessibility sweep (semantic labels on icon-only
-  buttons).
+  phase's done-check).
+- **Accessibility sweep: DONE (2026-08-15).** It went well beyond the "semantic
+  labels on icon-only buttons" scoped here — contrast-derived semantic colours,
+  one-node-per-row semantics, spoken forms of the abbreviated labels, 48dp
+  targets, a non-gesture equivalent for pull-to-refresh, announcements for
+  invisible state changes, large-text layouts, and 42 tests. The rules, what is
+  enforced and what is still missing are in [accessibility.md](accessibility.md);
+  the remaining gap is a hands-on TalkBack/VoiceOver pass on a device. New
+  screens must use the shared widgets (`InfoTile`/`LabelledRow`, `AccentPill`,
+  `SectionHeading`, `AccessibleRefresh`, `TapTarget`) to inherit it.
 
 ---
 

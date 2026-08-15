@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/a11y/a11y.dart';
 import '../../core/db/app_database.dart';
 import '../../core/providers.dart';
 import '../../core/router/app_router.dart';
 import '../../core/sync/timer_service.dart';
+import '../../core/utils/formatting.dart';
 
 /// App-wide banner shown above the bottom nav while a task timer runs. Ticks
 /// every second and lets the tech jump to the ticket or stop the timer.
@@ -57,25 +59,43 @@ class _TimerBannerState extends ConsumerState<TimerBanner> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             children: [
-              Icon(
-                Icons.timer,
-                size: 18,
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                _fmt(elapsed),
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontFeatures: const [],
-                  color: theme.colorScheme.onPrimaryContainer,
-                ),
-              ),
-              const SizedBox(width: 8),
+              // One node for the whole readout, and deliberately NOT a live
+              // region: it changes every second, and a reader would talk over
+              // everything else in the app.
               Expanded(
-                child: Text(
-                  '#${timer.ticketServerId}  ${timer.ticketName}',
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
+                child: Semantics(
+                  container: true,
+                  label:
+                      'Timer running, ${spokenDuration(elapsed)}, on '
+                      '${timer.ticketName}',
+                  excludeSemantics: true,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.timer,
+                        size: 18,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _fmt(elapsed),
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontFeatures: const [],
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '#${timer.ticketServerId}  ${timer.ticketName}',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               TextButton.icon(
@@ -102,6 +122,12 @@ class _TimerBannerState extends ConsumerState<TimerBanner> {
   Future<void> _stop(ActiveTimer timer) async {
     final minutes = await ref.read(timerServiceProvider).stop();
     if (!mounted) return;
+    // The banner disappears and a duration quietly lands in a composer that may
+    // be a screen away — say what happened.
+    announce(
+      context,
+      'Timer stopped, ${spokenDuration(minutes * 60)} ready to log',
+    );
     // Pre-fill the composer's task duration. If we're already on the ticket,
     // the mounted composer picks it up via its listener; otherwise navigate.
     ref.read(pendingTaskMinutesProvider.notifier).set(minutes);

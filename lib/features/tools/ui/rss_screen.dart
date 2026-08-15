@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/dto/tools_dto.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/layout.dart';
+import '../../../core/widgets/accessible_refresh.dart';
 
 /// RSS feeds configured in GLPI. The app lists them and hands the URL off —
 /// it deliberately doesn't parse feed items (that's a desktop reading task).
@@ -17,7 +18,7 @@ class RssScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('RSS feeds')),
-      body: RefreshIndicator(
+      body: AccessibleRefresh(
         onRefresh: () async => ref.invalidate(rssFeedsProvider),
         child: switch (feeds) {
           AsyncData(:final value) when value.isEmpty => ListView(
@@ -44,7 +45,9 @@ class RssScreen extends ConsumerWidget {
               Center(child: Text('RSS feeds need a connection')),
             ],
           ),
-          _ => const Center(child: CircularProgressIndicator()),
+          _ => const Center(
+            child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+          ),
         },
       ),
       floatingActionButton: FloatingActionButton(
@@ -73,9 +76,12 @@ class RssScreen extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'New RSS feed',
-              style: Theme.of(context).textTheme.titleMedium,
+            Semantics(
+              header: true,
+              child: Text(
+                'New RSS feed',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -129,6 +135,7 @@ class _FeedTile extends ConsumerWidget {
       title: Text(feed.name),
       subtitle: Text(host, maxLines: 1, overflow: TextOverflow.ellipsis),
       trailing: PopupMenuButton<String>(
+        tooltip: 'Actions for ${feed.name}',
         onSelected: (v) async {
           if (v == 'copy') {
             await Clipboard.setData(ClipboardData(text: feed.url));

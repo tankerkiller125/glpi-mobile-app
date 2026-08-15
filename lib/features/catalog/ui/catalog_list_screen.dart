@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers.dart';
+import '../../../core/widgets/accessible_refresh.dart';
 import '../../ticket/ui/option_sheet.dart';
 import 'catalog_tile.dart';
 
@@ -160,7 +161,7 @@ class _CatalogListScreenState extends ConsumerState<CatalogListScreen> {
           ),
         ),
       ),
-      body: RefreshIndicator(
+      body: AccessibleRefresh(
         onRefresh: _refresh,
         child: items.isEmpty
             ? ListView(

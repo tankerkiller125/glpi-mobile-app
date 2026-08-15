@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/a11y/contrast.dart';
 import '../../../core/api/itil_type.dart';
 import '../../../core/models/ticket_detail.dart';
 import '../../../core/models/timeline_entry.dart';
@@ -10,9 +11,11 @@ import '../../../core/router/app_router.dart';
 import '../../../core/sync/ticket_actions.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatting.dart';
+import '../../../core/widgets/accessible_refresh.dart';
 import '../../../core/widgets/due_badge.dart';
 import '../../../core/widgets/info_tile.dart';
 import '../../../core/widgets/rich_content.dart';
+import '../../../core/widgets/section_heading.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../timer/timer_banner.dart';
 import 'analysis_section.dart';
@@ -125,6 +128,7 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
             ),
           if (detail != null)
             PopupMenuButton<String>(
+              tooltip: 'More actions',
               onSelected: (v) => _onAction(v, detail),
               itemBuilder: (context) => [
                 if (!_isAssignedToMe(detail))
@@ -172,7 +176,7 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
         AsyncData(value: final d?) => Column(
           children: [
             Expanded(
-              child: RefreshIndicator(
+              child: AccessibleRefresh(
                 onRefresh: _refresh,
                 child: _DetailBody(detail: d, ticketLocalId: widget.localId),
               ),
@@ -187,7 +191,9 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
         AsyncError() => Center(
           child: Text(AppLocalizations.of(context).genericError),
         ),
-        _ => const Center(child: CircularProgressIndicator()),
+        _ => const Center(
+          child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+        ),
       },
     );
   }
@@ -295,7 +301,12 @@ class _DetailBody extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(detail.name, style: theme.textTheme.titleLarge),
+              // The title is this screen's heading: screen-reader users can
+              // jump between headings instead of swiping through every field.
+              Semantics(
+                header: true,
+                child: Text(detail.name, style: theme.textTheme.titleLarge),
+              ),
               const SizedBox(height: 10),
               // Quick-edit chips: status and type (both editable, same style).
               Wrap(
@@ -303,6 +314,7 @@ class _DetailBody extends ConsumerWidget {
                 runSpacing: 8,
                 children: [
                   _TicketChip(
+                    field: 'Status',
                     dotColor: colors.statusColor(detail.status),
                     label: statusLabel(
                       detail.status,
@@ -312,6 +324,7 @@ class _DetailBody extends ConsumerWidget {
                   ),
                   if (itilHasRequestType(detail.itemtype))
                     _TicketChip(
+                      field: 'Type',
                       icon: detail.type == 1
                           ? Icons.error_outline
                           : Icons.help_outline,
@@ -391,7 +404,7 @@ class _DetailBody extends ConsumerWidget {
               ),
               if (detail.content.trim().isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text('Description', style: theme.textTheme.labelLarge),
+                const SectionHeading('Description'),
                 const SizedBox(height: 4),
                 RichContent(detail.content),
               ],
@@ -407,7 +420,7 @@ class _DetailBody extends ConsumerWidget {
               AttachmentsSection.forTicket(detail),
               const SizedBox(height: 8),
               const Divider(),
-              Text('Timeline', style: theme.textTheme.labelLarge),
+              const SectionHeading('Timeline'),
             ],
           ),
         ),
@@ -435,7 +448,9 @@ class _DetailBody extends ConsumerWidget {
           ),
           _ => const Padding(
             padding: EdgeInsets.all(24),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(
+              child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+            ),
           ),
         },
       ],
@@ -584,31 +599,21 @@ class _DueTile extends StatelessWidget {
     final color = open
         ? context.glpiColors.slaColor(remaining)
         : theme.colorScheme.outline;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
+    return LabelledRow(
+      icon: Icons.alarm,
+      iconColor: color,
+      label: label,
+      // "in 3h" is read as "in three h"; say the whole thing instead.
+      semanticsValue: open
+          ? '${formatDateTime(due)}, ${spokenDueRelative(due)}'
+          : formatDateTime(due),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Icon(Icons.alarm, size: 18, color: color),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 92,
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Wrap(
-              spacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(formatDateTime(due), style: theme.textTheme.bodyMedium),
-                if (open) DueBadge(text: formatDueRelative(due), color: color),
-              ],
-            ),
-          ),
+          Text(formatDateTime(due), style: theme.textTheme.bodyMedium),
+          if (open) DueBadge(text: formatDueRelative(due), color: color),
         ],
       ),
     );
@@ -634,52 +639,42 @@ class _ActorEditTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return LabelledRow(
+      icon: icon,
+      label: label,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      // The chips stay individually reachable (each is a control), so the row
+      // announces only who is on it; the chips announce how to remove them.
+      semanticsValue: actors.isEmpty
+          ? 'None'
+          : actors.map((a) => a.displayName).join(', '),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Icon(icon, size: 18, color: theme.colorScheme.outline),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 92,
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
+          for (final a in actors)
+            InputChip(
+              // No shrinkWrap: it drops the chip below the 48dp touch target,
+              // and these sit close enough together to mis-tap.
+              visualDensity: VisualDensity.compact,
+              avatar: Icon(
+                a.isGroup ? Icons.group_outlined : Icons.person_outline,
+                size: 16,
               ),
+              label: Text(a.displayName),
+              deleteButtonTooltipMessage: 'Remove ${a.displayName} from $label',
+              onDeleted: onRemove == null ? null : () => onRemove!(a),
             ),
-          ),
-          Expanded(
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                for (final a in actors)
-                  InputChip(
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    avatar: Icon(
-                      a.isGroup ? Icons.group_outlined : Icons.person_outline,
-                      size: 16,
-                    ),
-                    label: Text(a.displayName),
-                    onDeleted: onRemove == null ? null : () => onRemove!(a),
-                  ),
-                if (actors.isEmpty)
-                  Text('None', style: theme.textTheme.bodyMedium),
-                if (onAdd != null)
-                  ActionChip(
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    avatar: const Icon(Icons.add, size: 16),
-                    label: const Text('Add'),
-                    onPressed: onAdd,
-                  ),
-              ],
+          if (actors.isEmpty) Text('None', style: theme.textTheme.bodyMedium),
+          if (onAdd != null)
+            ActionChip(
+              visualDensity: VisualDensity.compact,
+              avatar: const Icon(Icons.add, size: 16),
+              label: const Text('Add'),
+              tooltip: 'Add to $label',
+              onPressed: onAdd,
             ),
-          ),
         ],
       ),
     );
@@ -761,23 +756,43 @@ class _TicketChip extends StatelessWidget {
   const _TicketChip({
     required this.label,
     required this.onTap,
+    required this.field,
     this.icon,
     this.dotColor,
   });
 
   final String label;
   final VoidCallback onTap;
+
+  /// What the chip is showing ("Status", "Type") — the chip's own text is just
+  /// the value, so this names the dimension for the tooltip and the reader.
+  final String field;
+
   final IconData? icon;
   final Color? dotColor;
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return ActionChip(
       visualDensity: VisualDensity.compact,
       avatar: icon != null
           ? Icon(icon, size: 16)
-          : Icon(Icons.circle, size: 12, color: dotColor),
+          : Icon(
+              Icons.circle,
+              size: 12,
+              color: dotColor == null
+                  ? null
+                  : ensureContrast(
+                      dotColor!,
+                      scheme.surface,
+                      minRatio: wcagAaGraphics,
+                    ),
+            ),
       label: Text(label),
+      // The chip's text is only the value ("New"); the tooltip is what tells a
+      // screen reader — and a hesitating thumb — which field it belongs to.
+      tooltip: 'Change ${field.toLowerCase()}',
       onPressed: onTap,
     );
   }
@@ -793,37 +808,27 @@ class _PriorityTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
+    return LabelledRow(
+      icon: Icons.flag_outlined,
+      // The flag is the only colored mark in the row; hold it to 3:1.
+      iconColor: ensureContrast(
+        color,
+        theme.colorScheme.surface,
+        minRatio: wcagAaGraphics,
+      ),
+      label: 'Priority',
+      semanticsValue:
+          '${priorityLabel(priority)}, derived from urgency and impact',
+      child: Wrap(
+        spacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Icon(Icons.flag_outlined, size: 18, color: color),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 92,
-            child: Text(
-              'Priority',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Row(
-              children: [
-                Text(
-                  priorityLabel(priority),
-                  style: theme.textTheme.bodyMedium,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'derived from urgency × impact',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.outline,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
+          Text(priorityLabel(priority), style: theme.textTheme.bodyMedium),
+          Text(
+            'derived from urgency × impact',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.outline,
+              fontStyle: FontStyle.italic,
             ),
           ),
         ],

@@ -7,6 +7,7 @@ import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/formatting.dart';
 import '../../../core/utils/layout.dart';
+import '../../../core/widgets/accessible_refresh.dart';
 import 'event_editor_sheet.dart';
 import 'planning_event_tile.dart';
 import 'reschedule_sheet.dart';
@@ -88,7 +89,7 @@ class _PlanningScreenState extends ConsumerState<PlanningScreen> {
           ),
           const Divider(height: 1),
           Expanded(
-            child: RefreshIndicator(
+            child: AccessibleRefresh(
               onRefresh: _refresh,
               child: _weekView ? const _WeekAgenda() : const _DayList(),
             ),
@@ -152,7 +153,8 @@ class _DateStrip extends StatelessWidget {
     final today = DateTime.now();
     final start = selected.subtract(const Duration(days: 3));
     return SizedBox(
-      height: 68,
+      // Two lines of text in a fixed box: it has to grow with the font scale.
+      height: MediaQuery.textScalerOf(context).scale(68).clamp(68.0, 130.0),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -163,37 +165,50 @@ class _DateStrip extends StatelessWidget {
           final isToday = _sameDay(d, today);
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(10),
+            child: Semantics(
+              button: true,
+              selected: isSelected,
+              // The chip shows "M" over "14"; spoken, that is two fragments
+              // with no month and no year in sight.
+              label:
+                  '${_weekdayName(d.weekday)} ${d.day} ${_monthName(d.month)}'
+                  '${isToday ? ', today' : ''}',
               onTap: () => onSelect(d),
-              child: Container(
-                width: 48,
-                decoration: BoxDecoration(
-                  color: isSelected ? theme.colorScheme.primary : null,
-                  border: isToday && !isSelected
-                      ? Border.all(color: theme.colorScheme.primary)
-                      : null,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _weekdayLetter(d.weekday),
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: isSelected
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.outline,
+              excludeSemantics: true,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => onSelect(d),
+                child: Container(
+                  width: 48,
+                  decoration: BoxDecoration(
+                    color: isSelected ? theme.colorScheme.primary : null,
+                    border: isToday && !isSelected
+                        ? Border.all(color: theme.colorScheme.primary)
+                        : null,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _weekdayLetter(d.weekday),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: isSelected
+                              ? theme.colorScheme.onPrimary
+                              : theme.colorScheme.outline,
+                        ),
                       ),
-                    ),
-                    Text(
-                      '${d.day}',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: isSelected ? theme.colorScheme.onPrimary : null,
-                        fontWeight: FontWeight.w600,
+                      Text(
+                        '${d.day}',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: isSelected
+                              ? theme.colorScheme.onPrimary
+                              : null,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -274,31 +289,44 @@ class _WeekAgenda extends ConsumerWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  InkWell(
+                  Semantics(
+                    button: true,
+                    header: true,
+                    selected: _sameDay(d, day),
+                    // The trailing count is a bare number otherwise.
+                    label:
+                        '${_weekdayName(d.weekday)} ${d.day} '
+                        '${_monthName(d.month)}, '
+                        '${dayEvents.length == 1 ? '1 event' : '${dayEvents.length} events'}',
                     onTap: () => ref.read(planningDayProvider.notifier).set(d),
-                    child: Container(
-                      color: _sameDay(d, day)
-                          ? theme.colorScheme.secondaryContainer.withValues(
-                              alpha: 0.4,
-                            )
-                          : null,
-                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-                      child: Row(
-                        children: [
-                          Text(
-                            '${_weekdayName(d.weekday)} ${d.day} '
-                            '${_monthName(d.month)}',
-                            style: theme.textTheme.labelLarge,
-                          ),
-                          const Spacer(),
-                          if (dayEvents.isNotEmpty)
+                    excludeSemantics: true,
+                    child: InkWell(
+                      onTap: () =>
+                          ref.read(planningDayProvider.notifier).set(d),
+                      child: Container(
+                        color: _sameDay(d, day)
+                            ? theme.colorScheme.secondaryContainer.withValues(
+                                alpha: 0.4,
+                              )
+                            : null,
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                        child: Row(
+                          children: [
                             Text(
-                              '${dayEvents.length}',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.outline,
-                              ),
+                              '${_weekdayName(d.weekday)} ${d.day} '
+                              '${_monthName(d.month)}',
+                              style: theme.textTheme.labelLarge,
                             ),
-                        ],
+                            const Spacer(),
+                            if (dayEvents.isNotEmpty)
+                              Text(
+                                '${dayEvents.length}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.outline,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

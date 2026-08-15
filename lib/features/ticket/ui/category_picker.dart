@@ -79,6 +79,8 @@ class _CategoryPickerState extends ConsumerState<CategoryPicker> {
                         ListTile(
                           leading: const Icon(Icons.folder_outlined),
                           title: Text(c.name),
+                          // Announces "selected"; the tick alone doesn't.
+                          selected: c.serverId == widget.current,
                           trailing: c.serverId == widget.current
                               ? const Icon(Icons.check, size: 18)
                               : null,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/a11y/a11y.dart';
 import '../../../core/models/planning_event.dart';
 import '../../../core/models/reminder.dart';
 import '../../../core/providers.dart';
@@ -8,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatting.dart';
 import '../../../core/utils/html_text.dart';
 import '../../../core/utils/layout.dart';
+import '../../../core/widgets/accessible_refresh.dart';
 import '../../../core/widgets/date_time_field.dart';
 
 /// Reminders: personal notes, optionally scheduled into the planning calendar.
@@ -40,7 +42,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Reminders')),
-      body: RefreshIndicator(
+      body: AccessibleRefresh(
         onRefresh: _refresh,
         child: reminders.isEmpty
             ? ListView(
@@ -82,87 +84,110 @@ class _ReminderCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final colors = context.glpiColors;
 
+    // A padlock icon, a coloured dot and a trailing "syncing…" are three
+    // fragments; spoken as one sentence they are a reminder.
+    final spoken = semanticSentence([
+      reminder.name,
+      if (reminder.content.trim().isNotEmpty) htmlToPlainText(reminder.content),
+      if (reminder.isPlanned && reminder.begin != null)
+        '${formatDateTime(reminder.begin)}, ${reminder.stateLabel}'
+      else
+        'not scheduled',
+      if (!reminder.isMine) 'shared with you, read-only',
+      if (reminder.pending) 'waiting to sync',
+    ]);
+
     return Opacity(
       opacity: reminder.pending ? 0.55 : 1,
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: InkWell(
-          onTap: reminder.isEditable
-              ? () => ReminderEditor.show(context, existing: reminder)
-              : null,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        reminder.name,
-                        style: theme.textTheme.titleSmall,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+      child: Semantics(
+        container: true,
+        button: reminder.isEditable,
+        label: spoken,
+        hint: reminder.isEditable ? 'Edit' : null,
+        onTap: reminder.isEditable
+            ? () => ReminderEditor.show(context, existing: reminder)
+            : null,
+        excludeSemantics: true,
+        child: Card(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: InkWell(
+            onTap: reminder.isEditable
+                ? () => ReminderEditor.show(context, existing: reminder)
+                : null,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          reminder.name,
+                          style: theme.textTheme.titleSmall,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    if (!reminder.isMine)
-                      Icon(
-                        Icons.lock_outline,
-                        size: 16,
-                        color: theme.colorScheme.outline,
-                      ),
-                  ],
-                ),
-                if (reminder.content.trim().isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    htmlToPlainText(reminder.content),
-                    style: theme.textTheme.bodySmall,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                      if (!reminder.isMine)
+                        Icon(
+                          Icons.lock_outline,
+                          size: 16,
+                          color: theme.colorScheme.outline,
+                        ),
+                    ],
                   ),
-                ],
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    if (reminder.isPlanned && reminder.begin != null) ...[
-                      Icon(
-                        Icons.circle,
-                        size: 10,
-                        color: colors.planningReminder,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        formatDateTime(reminder.begin),
-                        style: theme.textTheme.bodySmall?.copyWith(
+                  if (reminder.content.trim().isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      htmlToPlainText(reminder.content),
+                      style: theme.textTheme.bodySmall,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      if (reminder.isPlanned && reminder.begin != null) ...[
+                        Icon(
+                          Icons.circle,
+                          size: 10,
                           color: colors.planningReminder,
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        reminder.stateLabel,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
+                        const SizedBox(width: 6),
+                        Text(
+                          formatDateTime(reminder.begin),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colors.planningReminder,
+                          ),
                         ),
-                      ),
-                    ] else
-                      Text(
-                        'Not scheduled',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
+                        const SizedBox(width: 10),
+                        Text(
+                          reminder.stateLabel,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
                         ),
-                      ),
-                    const Spacer(),
-                    if (reminder.pending)
-                      Text(
-                        'syncing…',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
+                      ] else
+                        Text(
+                          'Not scheduled',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
                         ),
-                      ),
-                  ],
-                ),
-              ],
+                      const Spacer(),
+                      if (reminder.pending)
+                        Text(
+                          'syncing…',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -231,14 +256,17 @@ class _ReminderEditorState extends ConsumerState<ReminderEditor> {
           children: [
             Row(
               children: [
-                Text(
-                  _isEdit ? 'Edit reminder' : 'New reminder',
-                  style: theme.textTheme.titleMedium,
+                Semantics(
+                  header: true,
+                  child: Text(
+                    _isEdit ? 'Edit reminder' : 'New reminder',
+                    style: theme.textTheme.titleMedium,
+                  ),
                 ),
                 const Spacer(),
                 if (_isEdit)
                   IconButton(
-                    tooltip: 'Delete',
+                    tooltip: 'Delete reminder',
                     icon: const Icon(Icons.delete_outline),
                     onPressed: _confirmDelete,
                   ),

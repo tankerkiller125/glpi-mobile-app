@@ -70,16 +70,22 @@ class _ServerScreenState extends ConsumerState<ServerScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(
-                    Icons.support_agent,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.primary,
+                  // Decorative: the heading right below says the same thing.
+                  ExcludeSemantics(
+                    child: Icon(
+                      Icons.support_agent,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    l.serverTitle,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                    textAlign: TextAlign.center,
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      l.serverTitle,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   TextField(
@@ -102,7 +108,10 @@ class _ServerScreenState extends ConsumerState<ServerScreen> {
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              semanticsLabel: 'Checking the server',
+                            ),
                           )
                         : Text(l.next),
                   ),

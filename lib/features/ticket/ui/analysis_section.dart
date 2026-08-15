@@ -5,7 +5,9 @@ import '../../../core/api/itil_type.dart';
 import '../../../core/models/ticket_detail.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/html_text.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/rich_content.dart';
+import '../../../core/widgets/section_heading.dart';
 import 'compose_sheet.dart';
 
 /// The analysis fields GLPI gives Changes and Problems but not Tickets:
@@ -37,15 +39,13 @@ class AnalysisSection extends ConsumerWidget {
     final fields = _fields[item.itemtype];
     if (fields == null) return const SizedBox.shrink(); // Tickets have none
 
-    final theme = Theme.of(context);
     final values = ref.watch(itilExtraProvider(item.localId)).value ?? const {};
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        SectionHeading(
           item.itemtype == itilChange ? 'Change analysis' : 'Problem analysis',
-          style: theme.textTheme.labelLarge,
         ),
         const SizedBox(height: 4),
         for (final (key, label) in fields)
@@ -117,46 +117,75 @@ class _AnalysisTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final empty = value.trim().isEmpty;
-    return InkWell(
-      onTap: onEdit,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 110,
-              child: Text(
-                label,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
-                ),
-              ),
-            ),
-            Expanded(
-              child: empty
-                  ? Text(
-                      'Not set',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.outline,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    )
-                  : RichContent(value, selectable: false),
-            ),
-            Icon(
-              // Don't promise an edit the mobile editor can't make safely.
-              htmlHasUnsupportedMarkup(value)
-                  ? Icons.lock_outline
-                  : Icons.edit_outlined,
-              size: 16,
+    final locked = htmlHasUnsupportedMarkup(value);
+    final stacked = prefersStackedRows(context);
+
+    final labelText = Text(
+      label,
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: theme.colorScheme.outline,
+      ),
+    );
+    final valueWidget = empty
+        ? Text(
+            'Not set',
+            style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.outline,
+              fontStyle: FontStyle.italic,
             ),
-          ],
+          )
+        : RichContent(value, selectable: false);
+    final affordance = Icon(
+      // Don't promise an edit the mobile editor can't make safely.
+      locked ? Icons.lock_outline : Icons.edit_outlined,
+      size: 16,
+      color: theme.colorScheme.outline,
+    );
+
+    return Semantics(
+      container: true,
+      button: true,
+      label: label,
+      value: empty ? 'Not set' : htmlToPlainText(value),
+      // Both outcomes are worth knowing before you tap: one opens an editor,
+      // the other opens an explanation of why it won't.
+      hint: locked ? 'Read-only, contains a table or image' : 'Edit',
+      onTap: onEdit,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onEdit,
+        excludeFromSemantics: true,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: kMinInteractiveDimension,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: stacked
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: labelText),
+                          affordance,
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      valueWidget,
+                    ],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(width: 110, child: labelText),
+                      Expanded(child: valueWidget),
+                      affordance,
+                    ],
+                  ),
+          ),
         ),
       ),
     );
   }
-
-  /// GLPI stores these as rich text; show them as plain text on mobile.
 }

@@ -90,16 +90,19 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
           children: [
             Row(
               children: [
-                Text(
-                  _isEdit
-                      ? (_isReminder ? 'Edit reminder' : 'Edit event')
-                      : (_isReminder ? 'New reminder' : 'New event'),
-                  style: theme.textTheme.titleMedium,
+                Semantics(
+                  header: true,
+                  child: Text(
+                    _isEdit
+                        ? (_isReminder ? 'Edit reminder' : 'Edit event')
+                        : (_isReminder ? 'New reminder' : 'New event'),
+                    style: theme.textTheme.titleMedium,
+                  ),
                 ),
                 const Spacer(),
                 if (_isEdit)
                   IconButton(
-                    tooltip: 'Delete',
+                    tooltip: _isReminder ? 'Delete reminder' : 'Delete event',
                     icon: const Icon(Icons.delete_outline),
                     onPressed: _confirmDelete,
                   ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/utils/formatting.dart';
 import '../../../core/utils/layout.dart';
+import '../../../core/widgets/section_heading.dart';
 
 /// Inline, tappable duration control for the composer. Shows the current value
 /// and opens a precise picker (hour/minute steppers + quick presets). Replaces
@@ -89,12 +90,24 @@ class _DurationPickerSheetState extends State<DurationPickerSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Task duration', style: theme.textTheme.titleMedium),
+            Semantics(
+              header: true,
+              child: Text('Task duration', style: theme.textTheme.titleMedium),
+            ),
             const SizedBox(height: 12),
             Center(
-              child: Text(
-                _minutes > 0 ? formatDuration(_minutes * 60) : 'None',
-                style: theme.textTheme.headlineMedium,
+              child: Semantics(
+                // The steppers change this number and nothing else; a live
+                // region is how a screen reader hears the result of a tap.
+                liveRegion: true,
+                label: _minutes > 0
+                    ? 'Duration ${spokenDuration(_minutes * 60)}'
+                    : 'No duration set',
+                excludeSemantics: true,
+                child: Text(
+                  _minutes > 0 ? formatDuration(_minutes * 60) : 'None',
+                  style: theme.textTheme.headlineMedium,
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -112,7 +125,7 @@ class _DurationPickerSheetState extends State<DurationPickerSheet> {
               onInc: () => _setMins(_mins + 5),
             ),
             const SizedBox(height: 12),
-            Text('Quick set', style: theme.textTheme.labelLarge),
+            const SectionHeading('Quick set'),
             const SizedBox(height: 6),
             Wrap(
               spacing: 8,
@@ -169,18 +182,30 @@ class _Stepper extends StatelessWidget {
         children: [
           Expanded(child: Text(label, style: theme.textTheme.bodyLarge)),
           IconButton.filledTonal(
+            // "minus" says nothing about what it decreases.
+            tooltip: 'Fewer ${label.toLowerCase()}',
             onPressed: value > 0 ? onDec : null,
             icon: const Icon(Icons.remove),
           ),
-          SizedBox(
-            width: 48,
-            child: Text(
-              '$value',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleLarge,
+          Semantics(
+            label: label,
+            value: '$value',
+            child: ExcludeSemantics(
+              child: SizedBox(
+                width: 48,
+                child: Text(
+                  '$value',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleLarge,
+                ),
+              ),
             ),
           ),
-          IconButton.filledTonal(onPressed: onInc, icon: const Icon(Icons.add)),
+          IconButton.filledTonal(
+            tooltip: 'More ${label.toLowerCase()}',
+            onPressed: onInc,
+            icon: const Icon(Icons.add),
+          ),
         ],
       ),
     );

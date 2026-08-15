@@ -97,10 +97,13 @@ class PrimaryNavDrawer extends ConsumerWidget {
             const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-              child: Text(
-                'Modules',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.outline,
+              child: Semantics(
+                header: true,
+                child: Text(
+                  'Modules',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
                 ),
               ),
             ),
@@ -171,12 +174,20 @@ class PrimaryNavDrawer extends ConsumerWidget {
               leading: CloudStatusIcon(state: cloud),
               title: Text('Sync · ${cloudStateLabel(cloud)}'),
               subtitle: _syncSubtitle(context, status),
+              // The subtitle already says "3 need attention"; the badge would
+              // otherwise add a bare "3" after it.
               trailing: status.needsAttentionCount > 0
-                  ? Badge(label: Text('${status.needsAttentionCount}'))
+                  ? ExcludeSemantics(
+                      child: Badge(
+                        label: Text('${status.needsAttentionCount}'),
+                      ),
+                    )
                   : (status.pendingCount > 0
-                        ? Badge(
-                            label: Text('${status.pendingCount}'),
-                            backgroundColor: theme.colorScheme.primary,
+                        ? ExcludeSemantics(
+                            child: Badge(
+                              label: Text('${status.pendingCount}'),
+                              backgroundColor: theme.colorScheme.primary,
+                            ),
                           )
                         : null),
               onTap: () {

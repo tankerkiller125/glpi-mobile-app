@@ -73,7 +73,11 @@ class _KbScreenState extends ConsumerState<KbScreen> {
       appBar: AppBar(
         title: const Text('Knowledge base'),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(108),
+          // The search field and the chip row both grow with the user's font
+          // scale; a fixed 108 clips them into a striped overflow at 200%.
+          preferredSize: Size.fromHeight(
+            MediaQuery.textScalerOf(context).scale(108).clamp(108.0, 220.0),
+          ),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Column(
@@ -89,6 +93,7 @@ class _KbScreenState extends ConsumerState<KbScreen> {
                     suffixIcon: _search.text.isEmpty
                         ? null
                         : IconButton(
+                            tooltip: 'Clear search',
                             icon: const Icon(Icons.clear),
                             onPressed: () {
                               _search.clear();
@@ -100,7 +105,9 @@ class _KbScreenState extends ConsumerState<KbScreen> {
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  height: 34,
+                  height: MediaQuery.textScalerOf(
+                    context,
+                  ).scale(34).clamp(34.0, 80.0),
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
@@ -171,7 +178,9 @@ class _KbScreenState extends ConsumerState<KbScreen> {
             _ArticleTile(article: value[i], source: widget.sourceTicketLocalId),
       ),
       AsyncError() => const Center(child: Text('Search needs a connection')),
-      _ => const Center(child: CircularProgressIndicator()),
+      _ => const Center(
+        child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+      ),
     };
   }
 

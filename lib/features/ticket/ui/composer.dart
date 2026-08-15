@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/a11y/a11y.dart';
 import '../../../core/models/ticket_detail.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/html_text.dart';
@@ -108,6 +109,9 @@ class _ComposerState extends ConsumerState<Composer> {
     }
     if (!mounted) return;
     _controller.clear();
+    // The only visible confirmation is a new row further up a list the user
+    // isn't looking at, so say it happened.
+    announce(context, _mode == _Mode.reply ? 'Reply added' : 'Task added');
     setState(() {
       _sending = false;
       _durationMinutes = 0;
@@ -140,12 +144,21 @@ class _ComposerState extends ConsumerState<Composer> {
                     onSelectionChanged: (s) => setState(() => _mode = s.first),
                   ),
                   const Spacer(),
-                  IconButton(
-                    tooltip: _private ? 'Private' : 'Public',
-                    onPressed: () => setState(() => _private = !_private),
-                    icon: Icon(
-                      _private ? Icons.lock_outline : Icons.lock_open_outlined,
-                      color: _private ? theme.colorScheme.primary : null,
+                  // A toggle, so the reader says "Private note, on/off" rather
+                  // than leaving the current state to the icon shape.
+                  Semantics(
+                    toggled: _private,
+                    child: IconButton(
+                      tooltip: _private
+                          ? 'Private note — the requester will not see it'
+                          : 'Public note — the requester will see it',
+                      onPressed: () => setState(() => _private = !_private),
+                      icon: Icon(
+                        _private
+                            ? Icons.lock_outline
+                            : Icons.lock_open_outlined,
+                        color: _private ? theme.colorScheme.primary : null,
+                      ),
                     ),
                   ),
                 ],
@@ -159,17 +172,25 @@ class _ComposerState extends ConsumerState<Composer> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      minLines: 1,
-                      maxLines: 4,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: InputDecoration(
-                        hintText: _mode == _Mode.reply
-                            ? 'Write a reply…'
-                            : 'Describe the task…',
-                        border: const OutlineInputBorder(),
-                        isDense: true,
+                    child: Semantics(
+                      // A hint disappears the moment you type, taking the
+                      // field's name with it.
+                      label: _mode == _Mode.reply
+                          ? 'Reply'
+                          : 'Task description',
+                      textField: true,
+                      child: TextField(
+                        controller: _controller,
+                        minLines: 1,
+                        maxLines: 4,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: InputDecoration(
+                          hintText: _mode == _Mode.reply
+                              ? 'Write a reply…'
+                              : 'Describe the task…',
+                          border: const OutlineInputBorder(),
+                          isDense: true,
+                        ),
                       ),
                     ),
                   ),
@@ -178,13 +199,17 @@ class _ComposerState extends ConsumerState<Composer> {
                     onPressed: _sending ? null : _composeRich,
                     icon: const Icon(Icons.text_format),
                   ),
-                  FilledButton(
-                    onPressed: _sending ? null : _send,
-                    style: FilledButton.styleFrom(
-                      shape: const CircleBorder(),
-                      padding: const EdgeInsets.all(14),
+                  Tooltip(
+                    // An icon-only FilledButton has nothing to announce.
+                    message: _mode == _Mode.reply ? 'Send reply' : 'Add task',
+                    child: FilledButton(
+                      onPressed: _sending ? null : _send,
+                      style: FilledButton.styleFrom(
+                        shape: const CircleBorder(),
+                        padding: const EdgeInsets.all(14),
+                      ),
+                      child: const Icon(Icons.send, size: 20),
                     ),
-                    child: const Icon(Icons.send, size: 20),
                   ),
                 ],
               ),

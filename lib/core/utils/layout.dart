@@ -52,6 +52,17 @@ Rect? verticalHingeOf(BuildContext context) {
   return null;
 }
 
+/// True once the user's font size makes side-by-side label/value rows
+/// unworkable, so a layout should stack instead.
+///
+/// Android and iOS both go past 200%, and the app's detail rows put a
+/// fixed-width label beside its value — at that scale the label wins the space
+/// and the value is left with three ellipsised characters. The threshold is
+/// 1.4×, measured on real body text rather than assumed, because a text scaler
+/// is not necessarily linear (iOS's accessibility sizes are a curve).
+bool prefersStackedRows(BuildContext context) =>
+    MediaQuery.textScalerOf(context).scale(14) > 14 * 1.4;
+
 /// Long-form text is unreadable at tablet width; cap the measure and centre it.
 class ReadableWidth extends StatelessWidget {
   const ReadableWidth({super.key, required this.child, this.maxWidth = 720});

@@ -6,6 +6,7 @@ import '../../../core/models/ticket_list_item.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/layout.dart';
+import '../../../core/widgets/accessible_refresh.dart';
 import '../../../core/widgets/two_pane.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../ticket/ui/ticket_detail_screen.dart';
@@ -66,7 +67,7 @@ class ScopeListView extends ConsumerWidget {
               (tickets.isEmpty ? null : tickets.first.localId))
         : null;
 
-    final list = RefreshIndicator(
+    final list = AccessibleRefresh(
       onRefresh: refresh,
       child: switch (async) {
         AsyncData(:final value) when value.isEmpty => _EmptyList(
@@ -84,7 +85,9 @@ class ScopeListView extends ConsumerWidget {
           },
         ),
         AsyncError() => _EmptyList(label: l.genericError),
-        _ => const Center(child: CircularProgressIndicator()),
+        _ => const Center(
+          child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+        ),
       },
     );
 

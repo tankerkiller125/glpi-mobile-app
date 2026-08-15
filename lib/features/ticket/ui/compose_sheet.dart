@@ -80,20 +80,34 @@ class _ComposeSheetState extends State<ComposeSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(widget.title, style: Theme.of(context).textTheme.titleMedium),
+          // The sheet's own heading: a modal that opens over a screen has to
+          // announce what it is, and the reader lands on the first node.
+          Semantics(
+            header: true,
+            child: Text(
+              widget.title,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
           const SizedBox(height: 12),
           if (_rich != null)
             RichEditor(controller: _rich, hint: widget.hint, autofocus: true)
           else
-            TextField(
-              controller: _controller,
-              autofocus: true,
-              minLines: 3,
-              maxLines: 6,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                hintText: widget.hint,
-                border: const OutlineInputBorder(),
+            Semantics(
+              // The hint vanishes as soon as there is text; the field still
+              // needs a name after that.
+              label: widget.title,
+              textField: true,
+              child: TextField(
+                controller: _controller,
+                autofocus: true,
+                minLines: 3,
+                maxLines: 6,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  hintText: widget.hint,
+                  border: const OutlineInputBorder(),
+                ),
               ),
             ),
           const SizedBox(height: 12),

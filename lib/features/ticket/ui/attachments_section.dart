@@ -5,10 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../core/a11y/a11y.dart';
 import '../../../core/models/attachment.dart';
 import '../../../core/models/ticket_detail.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/layout.dart';
+import '../../../core/widgets/section_heading.dart';
 
 /// Attachments strip: horizontally-scrolling image thumbnails / file chips plus
 /// an "add" button (camera or gallery). New files are queued through the
@@ -47,24 +49,14 @@ class AttachmentsSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text('Attachments', style: theme.textTheme.labelLarge),
-            const SizedBox(width: 4),
-            if (items.isNotEmpty)
-              Text(
-                '(${items.length})',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
-                ),
-              ),
-            const Spacer(),
-            TextButton.icon(
-              onPressed: () => _add(context, ref),
-              icon: const Icon(Icons.add_a_photo_outlined, size: 18),
-              label: const Text('Add'),
-            ),
-          ],
+        SectionHeading(
+          'Attachments',
+          count: items.isEmpty ? null : items.length,
+          trailing: TextButton.icon(
+            onPressed: () => _add(context, ref),
+            icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+            label: const Text('Add'),
+          ),
         ),
         if (items.isEmpty)
           Padding(
@@ -170,35 +162,50 @@ class _AttachmentTile extends ConsumerWidget {
       content = _fileIcon(theme);
     }
 
-    return GestureDetector(
-      onTap: path == null ? null : () => _open(context, path),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Stack(
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              color: theme.colorScheme.surfaceContainerHighest,
-              child: content,
-            ),
-            if (attachment.pending)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black38,
-                  child: const Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
+    final canOpen = path != null && attachment.isImage;
+    return Semantics(
+      // A thumbnail is a picture of a picture: without this it is an anonymous
+      // 96px box. Name it, say whether it is still uploading, and say what a
+      // tap does — only images have a preview.
+      label: semanticSentence([
+        attachment.name,
+        attachment.isImage ? 'image' : 'file',
+        if (attachment.pending) 'uploading',
+      ]),
+      button: canOpen,
+      hint: canOpen ? 'Open preview' : null,
+      onTap: canOpen ? () => _open(context, path) : null,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: path == null ? null : () => _open(context, path),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Stack(
+            children: [
+              Container(
+                width: 96,
+                height: 96,
+                color: theme.colorScheme.surfaceContainerHighest,
+                child: content,
+              ),
+              if (attachment.pending)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black54,
+                    child: const Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -215,14 +222,18 @@ class _AttachmentTile extends ConsumerWidget {
           color: theme.colorScheme.primary,
         ),
         const SizedBox(height: 4),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Text(
-            attachment.name,
-            style: theme.textTheme.labelSmall,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
+        // Flexible, not Padding: the tile is a fixed 96 square and a long name
+        // at a large font scale would otherwise overflow the column.
+        Flexible(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              attachment.name,
+              style: theme.textTheme.labelSmall,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
       ],
@@ -256,7 +267,10 @@ class _ImageViewer extends StatelessWidget {
         title: Text(title),
       ),
       body: Center(
-        child: InteractiveViewer(maxScale: 5, child: Image.file(File(path))),
+        child: InteractiveViewer(
+          maxScale: 5,
+          child: Image.file(File(path), semanticLabel: title),
+        ),
       ),
     );
   }

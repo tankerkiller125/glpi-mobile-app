@@ -247,7 +247,9 @@ class _DynamicFormScreenState extends ConsumerState<DynamicFormScreen> {
             ),
           ),
         ),
-        _ => const Center(child: CircularProgressIndicator()),
+        _ => const Center(
+          child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+        ),
       },
     );
   }
@@ -278,9 +280,12 @@ class _DynamicFormScreenState extends ConsumerState<DynamicFormScreen> {
                 // A single unnamed section is just the form body — no header.
                 if (visibleSections.length > 1 || section.name.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Text(
-                    section.name.isEmpty ? 'Details' : section.name,
-                    style: theme.textTheme.titleMedium,
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      section.name.isEmpty ? 'Details' : section.name,
+                      style: theme.textTheme.titleMedium,
+                    ),
                   ),
                   if (section.description.isNotEmpty)
                     Padding(
@@ -358,15 +363,46 @@ class _QuestionField extends ConsumerWidget {
   final ValueChanged<List<({String path, String name, String? mime, int size})>>
   onFilesChanged;
 
+  /// True when the question renders as exactly one focusable control, so the
+  /// label, description, control and error can be merged into a single node.
+  ///
+  /// The visible label sits *above* the control and is not wired to it, so on
+  /// its own a screen reader reaches an anonymous "edit box". Merging is the
+  /// fix — but only where there is one control: merging a radio group would
+  /// collapse every option into one unusable node.
+  bool get _singleControl => switch (question.kind) {
+    QuestionKind.shortText ||
+    QuestionKind.longText ||
+    QuestionKind.email ||
+    QuestionKind.number ||
+    QuestionKind.dropdown ||
+    QuestionKind.itemDropdown ||
+    QuestionKind.item ||
+    QuestionKind.urgency ||
+    QuestionKind.requestType ||
+    QuestionKind.dateTime => true,
+    QuestionKind.userDevice => !question.multipleDevices,
+    _ => false,
+  };
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final label = question.mandatory ? '${question.name} *' : question.name;
 
-    return Column(
+    final body = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: theme.textTheme.labelLarge),
+        Semantics(
+          // "*" is read out as "star"; and for a group of controls this is the
+          // only thing naming them, so it doubles as the group heading.
+          label: question.mandatory
+              ? '${question.name}, required'
+              : question.name,
+          header: !_singleControl,
+          excludeSemantics: true,
+          child: Text(label, style: theme.textTheme.labelLarge),
+        ),
         if (question.description.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 2),
@@ -382,15 +418,21 @@ class _QuestionField extends ConsumerWidget {
         if (showError)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              'Required',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.error,
+            child: Semantics(
+              // Appears after a failed submit, when focus is elsewhere.
+              liveRegion: true,
+              child: Text(
+                'Required',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
               ),
             ),
           ),
       ],
     );
+
+    return _singleControl ? MergeSemantics(child: body) : body;
   }
 
   Widget _control(BuildContext context, WidgetRef ref) {
@@ -620,6 +662,7 @@ class _ActorsField extends ConsumerWidget {
             visualDensity: VisualDensity.compact,
             avatar: const Icon(Icons.person_outline, size: 16),
             label: Text(_labelFor(ref, v)),
+            deleteButtonTooltipMessage: 'Remove ${_labelFor(ref, v)}',
             onDeleted: () => onChanged([...value]..remove(v)),
           ),
         if (multiple || value.isEmpty)
@@ -668,6 +711,7 @@ class _FilesField extends ConsumerWidget {
             title: Text(f.name, maxLines: 1, overflow: TextOverflow.ellipsis),
             trailing: IconButton(
               icon: const Icon(Icons.close),
+              tooltip: 'Remove ${f.name}',
               onPressed: () => onChanged([...files]..remove(f)),
             ),
           ),
