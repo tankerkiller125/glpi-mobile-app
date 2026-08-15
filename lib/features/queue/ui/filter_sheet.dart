@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/repositories/ticket_repository.dart';
 import '../../../core/utils/formatting.dart';
+import '../../../core/widgets/section_heading.dart';
 import '../queue_controls.dart';
 import '../queue_providers.dart';
 
@@ -33,7 +34,13 @@ class FilterSheet extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Text('Filter & sort', style: theme.textTheme.titleMedium),
+                Semantics(
+                  header: true,
+                  child: Text(
+                    'Filter & sort',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
                 const Spacer(),
                 if (controls.hasActiveFilters)
                   TextButton(
@@ -43,7 +50,7 @@ class FilterSheet extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text('Status', style: theme.textTheme.labelLarge),
+            const SectionHeading('Status'),
             const SizedBox(height: 6),
             Wrap(
               spacing: 8,
@@ -57,7 +64,7 @@ class FilterSheet extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
-            Text('Priority', style: theme.textTheme.labelLarge),
+            const SectionHeading('Priority'),
             const SizedBox(height: 6),
             Wrap(
               spacing: 8,
@@ -72,7 +79,7 @@ class FilterSheet extends ConsumerWidget {
             ),
             if (ref.watch(queueCategoriesProvider).isNotEmpty) ...[
               const SizedBox(height: 16),
-              Text('Category', style: theme.textTheme.labelLarge),
+              const SectionHeading('Category'),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
@@ -88,7 +95,7 @@ class FilterSheet extends ConsumerWidget {
               ),
             ],
             const SizedBox(height: 16),
-            Text('Sort by', style: theme.textTheme.labelLarge),
+            const SectionHeading('Sort by'),
             const SizedBox(height: 6),
             SegmentedButton<QueueSort>(
               segments: const [

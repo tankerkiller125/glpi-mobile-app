@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/models/catalog_item.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/accessible_refresh.dart';
 import 'catalog_scan_screen.dart';
 import 'catalog_search_delegate.dart';
 
@@ -49,7 +50,7 @@ class CatalogHubScreen extends ConsumerWidget {
             ),
         ],
       ),
-      body: RefreshIndicator(
+      body: AccessibleRefresh(
         onRefresh: () async => ref.invalidate(itemtypesProvider(domain)),
         child: switch (types) {
           AsyncData(:final value) when value.isEmpty => _empty(
@@ -74,7 +75,9 @@ class CatalogHubScreen extends ConsumerWidget {
             ),
           ),
           AsyncError() => _empty(context, 'Itemtypes need a connection'),
-          _ => const Center(child: CircularProgressIndicator()),
+          _ => const Center(
+            child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+          ),
         },
       ),
     );
@@ -111,46 +114,61 @@ class _TypeCard extends ConsumerWidget {
       catalogCountProvider((domain: domain, itemtype: itemtype)),
     );
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      margin: EdgeInsets.zero,
-      child: InkWell(
-        onTap: () => context.push(
-          domain == 'Assets'
-              ? Routes.assetList(itemtype)
-              : Routes.managementList(itemtype),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                catalogIcon(itemtype),
-                size: 28,
-                color: theme.colorScheme.primary,
-              ),
-              const Spacer(),
-              Text(
-                label,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                switch (count) {
-                  // -1 is the repository's "couldn't reach the server" marker.
-                  AsyncData(:final value) when value >= 0 => '$value',
-                  AsyncData() => '—',
-                  AsyncError() => '—',
-                  _ => '…',
-                },
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
+    final spokenCount = switch (count) {
+      AsyncData(:final value) when value == 1 => '1 record',
+      AsyncData(:final value) when value >= 0 => '$value records',
+      AsyncData() || AsyncError() => 'count unavailable',
+      _ => 'counting',
+    };
+    final route = domain == 'Assets'
+        ? Routes.assetList(itemtype)
+        : Routes.managementList(itemtype);
+
+    return Semantics(
+      container: true,
+      button: true,
+      // The tile is an icon, a name and a bare number in a grid; spoken as
+      // "Computers, 42 records" it is a destination.
+      label: '$label, $spokenCount',
+      onTap: () => context.push(route),
+      excludeSemantics: true,
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        margin: EdgeInsets.zero,
+        child: InkWell(
+          onTap: () => context.push(route),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  catalogIcon(itemtype),
+                  size: 28,
+                  color: theme.colorScheme.primary,
                 ),
-              ),
-            ],
+                const Spacer(),
+                Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  switch (count) {
+                    // -1 is the repository's "couldn't reach the server" marker.
+                    AsyncData(:final value) when value >= 0 => '$value',
+                    AsyncData() => '—',
+                    AsyncError() => '—',
+                    _ => '…',
+                  },
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

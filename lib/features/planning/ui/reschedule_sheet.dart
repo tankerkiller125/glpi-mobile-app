@@ -48,7 +48,10 @@ class _RescheduleSheetState extends ConsumerState<RescheduleSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Reschedule', style: theme.textTheme.titleMedium),
+          Semantics(
+            header: true,
+            child: Text('Reschedule', style: theme.textTheme.titleMedium),
+          ),
           const SizedBox(height: 4),
           Text(
             widget.event.title,

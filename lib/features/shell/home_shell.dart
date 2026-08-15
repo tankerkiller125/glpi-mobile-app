@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/a11y/a11y.dart';
 import '../../core/api/itil_type.dart';
 import '../../core/auth/auth_controller.dart';
 import '../../core/providers.dart';
@@ -98,6 +99,19 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       ).showSnackBar(SnackBar(content: Text('Switched to $entity')));
     });
 
+    // Losing the connection changes nothing on screen except a small cloud in
+    // the app bar — say it, because it changes what the next tap will do.
+    ref.listen(cloudStateProvider, (previous, next) {
+      if (previous == null || previous == next) return;
+      announce(context, switch (next) {
+        CloudState.offline => 'Offline. Changes are saved and sync later.',
+        CloudState.connected when previous == CloudState.offline =>
+          'Back online',
+        CloudState.error => 'Some changes need attention',
+        _ => '',
+      });
+    });
+
     final filterCount = ref.watch(
       queueControlsProvider.select((c) => c.activeFilterCount),
     );
@@ -108,15 +122,20 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       drawer: const PrimaryNavDrawer(),
       appBar: AppBar(
         title: _searching
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Search tickets…',
-                  border: InputBorder.none,
+            ? Semantics(
+                label:
+                    'Search ${itilLabelPlural(ref.watch(itilModuleProvider)).toLowerCase()}',
+                textField: true,
+                child: TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Search tickets…',
+                    border: InputBorder.none,
+                  ),
+                  onChanged: (v) =>
+                      ref.read(queueControlsProvider.notifier).setSearch(v),
                 ),
-                onChanged: (v) =>
-                    ref.read(queueControlsProvider.notifier).setSearch(v),
               )
             // Just the module. The entity lives in the drawer, where it fits
             // and where you change it — appended here it only ever truncated.
@@ -124,12 +143,19 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         leading: _searching
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
+                tooltip: 'Close search',
                 onPressed: _stopSearch,
               )
             : Builder(
                 builder: (context) => IconButton(
                   icon: _MenuIcon(cloud: cloud),
-                  tooltip: 'Menu',
+                  // The badge on this icon is the only sync signal outside the
+                  // drawer, so the state belongs in the name too.
+                  tooltip: switch (cloud) {
+                    CloudState.offline => 'Menu, working offline',
+                    CloudState.error => 'Menu, sync needs attention',
+                    _ => 'Menu',
+                  },
                   onPressed: Scaffold.of(context).openDrawer,
                 ),
               ),
@@ -158,10 +184,16 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           if (!_searching)
             IconButton(
               icon: const Icon(Icons.search),
+              tooltip: 'Search',
               onPressed: () => setState(() => _searching = true),
             ),
           IconButton(
             onPressed: () => FilterSheet.show(context),
+            // A badge is a number floating over an icon; without this the
+            // button announces nothing and the count announces "3".
+            tooltip: filterCount > 0
+                ? 'Filter and sort, $filterCount active'
+                : 'Filter and sort',
             icon: Badge(
               isLabelVisible: filterCount > 0,
               label: Text('$filterCount'),

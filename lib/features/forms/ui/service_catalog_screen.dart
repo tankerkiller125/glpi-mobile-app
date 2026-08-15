@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/accessible_refresh.dart';
 
 /// The GLPI Service Catalog: the forms a technician can file. Picking one opens
 /// its dynamic form, so tickets are created through GLPI's own intake config
@@ -25,7 +26,7 @@ class ServiceCatalogScreen extends ConsumerWidget {
           // the tech isn't stuck.
           onFallback: () => context.push(Routes.createTicket),
         ),
-        AsyncData(:final value) => RefreshIndicator(
+        AsyncData(:final value) => AccessibleRefresh(
           onRefresh: () async => ref.invalidate(formCatalogProvider),
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -61,7 +62,9 @@ class ServiceCatalogScreen extends ConsumerWidget {
               'try again.',
           onRetry: () => ref.invalidate(formCatalogProvider),
         ),
-        _ => const Center(child: CircularProgressIndicator()),
+        _ => const Center(
+          child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+        ),
       },
     );
   }

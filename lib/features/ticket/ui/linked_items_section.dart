@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/a11y/contrast.dart';
 import '../../../core/api/itil_type.dart';
 import '../../../core/models/itil_link.dart';
 import '../../../core/models/ticket_detail.dart';
@@ -11,6 +12,7 @@ import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/layout.dart';
+import '../../../core/widgets/section_heading.dart';
 
 /// Relationships to other ITIL objects: tickets caused by a problem, the change
 /// that fixes them, duplicates, parent/child. Add/remove are offline-first, so a
@@ -28,24 +30,14 @@ class LinkedItemsSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text('Linked items', style: theme.textTheme.labelLarge),
-            const SizedBox(width: 4),
-            if (links.isNotEmpty)
-              Text(
-                '(${links.length})',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
-                ),
-              ),
-            const Spacer(),
-            TextButton.icon(
-              onPressed: () => _add(context, ref),
-              icon: const Icon(Icons.add_link, size: 18),
-              label: const Text('Link'),
-            ),
-          ],
+        SectionHeading(
+          'Linked items',
+          count: links.isEmpty ? null : links.length,
+          trailing: TextButton.icon(
+            onPressed: () => _add(context, ref),
+            icon: const Icon(Icons.add_link, size: 18),
+            label: const Text('Link'),
+          ),
         ),
         if (links.isEmpty)
           Padding(
@@ -96,7 +88,11 @@ class _LinkTile extends ConsumerWidget {
         dense: true,
         leading: Icon(
           _icon(link.itemtype),
-          color: colors.statusColor(link.status),
+          color: ensureContrast(
+            colors.statusColor(link.status),
+            theme.colorScheme.surface,
+            minRatio: wcagAaGraphics,
+          ),
         ),
         title: Text(
           '${link.typeLabel} #${link.serverId}  ${link.name}',
@@ -110,7 +106,8 @@ class _LinkTile extends ConsumerWidget {
           style: theme.textTheme.bodySmall,
         ),
         trailing: IconButton(
-          tooltip: 'Remove link',
+          // Several of these stack up on a busy ticket; say which one.
+          tooltip: 'Remove link to ${link.typeLabel} ${link.serverId}',
           icon: const Icon(Icons.link_off, size: 20),
           onPressed: () =>
               ref.read(ticketActionsProvider)?.removeLink(item, link),
@@ -186,7 +183,10 @@ class _LinkPickerBodyState extends ConsumerState<_LinkPickerBody> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Link an item', style: theme.textTheme.titleMedium),
+          Semantics(
+            header: true,
+            child: Text('Link an item', style: theme.textTheme.titleMedium),
+          ),
           const SizedBox(height: 12),
           SegmentedButton<String>(
             segments: [
@@ -297,7 +297,9 @@ class _Results extends ConsumerWidget {
         ],
       ),
       AsyncError() => const Center(child: Text('Search needs a connection')),
-      _ => const Center(child: CircularProgressIndicator()),
+      _ => const Center(
+        child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+      ),
     };
   }
 }

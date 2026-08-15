@@ -46,9 +46,12 @@ class _ContextScreenState extends ConsumerState<ContextScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(
-              l.profileLabel,
-              style: Theme.of(context).textTheme.titleMedium,
+            Semantics(
+              header: true,
+              child: Text(
+                l.profileLabel,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
             const SizedBox(height: 8),
             RadioGroup<int>(
@@ -62,7 +65,13 @@ class _ContextScreenState extends ConsumerState<ContextScreen> {
               ),
             ),
             const Divider(height: 32),
-            Text(l.entityLabel, style: Theme.of(context).textTheme.titleMedium),
+            Semantics(
+              header: true,
+              child: Text(
+                l.entityLabel,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
             const SizedBox(height: 8),
             switch (tree) {
               AsyncData(:final value) => RadioGroup<int>(
@@ -94,7 +103,9 @@ class _ContextScreenState extends ConsumerState<ContextScreen> {
               ),
               _ => const Padding(
                 padding: EdgeInsets.all(24),
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(
+                  child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+                ),
               ),
             },
             SwitchListTile(

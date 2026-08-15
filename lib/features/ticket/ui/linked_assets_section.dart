@@ -5,6 +5,7 @@ import '../../../core/models/catalog_item.dart';
 import '../../../core/models/ticket_detail.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/layout.dart';
+import '../../../core/widgets/section_heading.dart';
 
 /// The assets a ticket/change/problem is about. Add/remove are offline-first;
 /// the list itself comes from the server (the link table is small and the app
@@ -25,24 +26,14 @@ class LinkedAssetsSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text('Assets', style: theme.textTheme.labelLarge),
-            const SizedBox(width: 4),
-            if (assets.isNotEmpty)
-              Text(
-                '(${assets.length})',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
-                ),
-              ),
-            const Spacer(),
-            TextButton.icon(
-              onPressed: () => _add(context, ref, serverId),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Link asset'),
-            ),
-          ],
+        SectionHeading(
+          'Assets',
+          count: assets.isEmpty ? null : assets.length,
+          trailing: TextButton.icon(
+            onPressed: () => _add(context, ref, serverId),
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Link asset'),
+          ),
         ),
         if (assets.isEmpty)
           Padding(
@@ -73,7 +64,7 @@ class LinkedAssetsSection extends ConsumerWidget {
               ),
               trailing: IconButton(
                 icon: const Icon(Icons.link_off, size: 18),
-                tooltip: 'Unlink',
+                tooltip: 'Unlink ${asset.name}',
                 onPressed: () async {
                   await ref
                       .read(ticketActionsProvider)
@@ -199,7 +190,7 @@ class _AssetPickerSheetState extends ConsumerState<AssetPickerSheet> {
                 ),
                 _ => const Padding(
                   padding: EdgeInsets.all(24),
-                  child: CircularProgressIndicator(),
+                  child: CircularProgressIndicator(semanticsLabel: 'Loading'),
                 ),
               },
             ),

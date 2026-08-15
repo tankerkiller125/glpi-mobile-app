@@ -295,6 +295,34 @@ postures, and folding collapses to a single pane live without a restart. Bottom
 sheets cap at 640 dp and centre instead of stretching; the asset grid grows
 columns by available width; KB articles are capped to a readable measure.
 
+### Accessibility
+
+Every surface is built to be usable with a screen reader, at a large system font
+size, and by someone who cannot separate the status colours:
+
+- **Nothing means anything by colour alone.** Status, priority, SLA and privacy
+  always carry words as well as a hue.
+- **Semantic colours are re-derived for contrast** where they become text. The
+  GLPI palette is tuned to work as a 4px card edge; several of those colours sit
+  near 2:1 as a label, so `AccentColors`/`ensureContrast` darken or lighten them
+  until they clear WCAG AA on the surface behind them — hue intact.
+- **A row is one node, not eight.** A queue card reads as *"Ticket 42. Email
+  outage. Priority High. Status New. Alice, Acme, Hardware. Updated 4 hours
+  ago."*, and the terse on-screen forms (`4h`, `in 3h 20m`) are expanded for the
+  reader.
+- **Every gesture has a non-gesture equivalent.** Pull-to-refresh — which a
+  screen reader would otherwise swallow whole — is also a "Refresh" action in
+  TalkBack's actions menu; long-press to reschedule announces itself.
+- **Camera-only flows offer the alternative first.** Pairing starts on manual
+  code entry when a screen reader is active; the asset scanner always shows a
+  code field.
+- **Layouts survive 200% text.** Detail rows stack instead of truncating, and
+  the text scaler is never clamped.
+
+The rules, the tests that enforce them and the known gaps (chiefly: not yet
+walked through with a real screen reader on a device) are in
+[docs/accessibility.md](docs/accessibility.md).
+
 ## Building from source
 
 ```sh
@@ -481,7 +509,13 @@ writing against this API:
   clean, but the delivery path (UnifiedPush, FCM, the killed-app background
   isolate) has not been exercised on hardware since.
 - **Localization is partial.** English and French exist, but screens added after
-  the Assistance module are English-only pending an `.arb` sweep.
+  the Assistance module are English-only pending an `.arb` sweep. The
+  accessibility labels are inline English strings for the same reason, and
+  should be localized in that same pass.
+- **Accessibility has not been walked through with a real screen reader.** The
+  semantics tree, tap targets and colour contrast are asserted in the test
+  suite; TalkBack/VoiceOver pronunciation and focus order on a device have not
+  been checked by hand. See [docs/accessibility.md](docs/accessibility.md).
 - **Release builds are debug-signed** until you supply `key.properties`.
 - **No app-store distribution** — install the APK, or build it yourself.
 - Documents open by caching and copying the path; there is no external "open

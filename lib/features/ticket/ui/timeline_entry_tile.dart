@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/a11y/a11y.dart';
+import '../../../core/a11y/contrast.dart';
 import '../../../core/models/timeline_entry.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatting.dart';
 import '../../../core/utils/html_text.dart';
+import '../../../core/widgets/accent_pill.dart';
 import '../../../core/widgets/rich_content.dart';
 
 /// Renders one merged-timeline entry. Followups are chat bubbles; tasks show a
@@ -59,21 +62,10 @@ class _ApprovalBadge extends StatelessWidget {
       4 => ('Refused', context.glpiColors.priorityVeryHigh),
       _ => ('Waiting', context.glpiColors.statusPending),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+    return AccentPill(
+      label: label,
+      accent: color,
+      semanticsLabel: 'Approval: $label',
     );
   }
 }
@@ -89,26 +81,33 @@ class _PendingMark extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(left: 8),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 10,
-            height: 10,
-            child: CircularProgressIndicator(
-              strokeWidth: 1.5,
-              color: theme.colorScheme.outline,
+      child: Semantics(
+        // Announce it when it flips to sent while the screen is open, and don't
+        // let the bare spinner speak for itself.
+        liveRegion: true,
+        label: 'Waiting to send',
+        excludeSemantics: true,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 10,
+              height: 10,
+              child: CircularProgressIndicator(
+                strokeWidth: 1.5,
+                color: theme.colorScheme.outline,
+              ),
             ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            'Sending…',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.outline,
-              fontStyle: FontStyle.italic,
+            const SizedBox(width: 4),
+            Text(
+              'Sending…',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.outline,
+                fontStyle: FontStyle.italic,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -121,28 +120,39 @@ class _Meta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      children: [
-        if (entry.authorName != null)
+    // A byline is one fact — who, when, and whether the requester can see it.
+    // Wrap rather than Row: at 200% text an author's full name plus the badge
+    // overflows the bubble.
+    return Semantics(
+      container: true,
+      label: semanticSentence([
+        entry.authorName,
+        spokenAge(entry.dateCreation),
+        if (entry.isPrivate) 'Private, not visible to the requester',
+      ]),
+      excludeSemantics: !entry.isPending,
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          if (entry.authorName != null)
+            Text(
+              entry.authorName!,
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           Text(
-            entry.authorName!,
-            style: theme.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w600,
+            relativeAge(entry.dateCreation),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.outline,
             ),
           ),
-        const SizedBox(width: 8),
-        Text(
-          relativeAge(entry.dateCreation),
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.outline,
-          ),
-        ),
-        if (entry.isPrivate) ...[
-          const SizedBox(width: 8),
-          const _PrivateBadge(),
+          if (entry.isPrivate) const _PrivateBadge(),
+          _PendingMark(entry: entry),
         ],
-        _PendingMark(entry: entry),
-      ],
+      ),
     );
   }
 }
@@ -161,27 +171,37 @@ class _PrivateBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = _privateAccent(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-      decoration: BoxDecoration(
-        color: accent,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.lock, size: 11, color: Colors.white),
-          SizedBox(width: 3),
-          Text(
-            'PRIVATE',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
+    // The badge is a filled block, so the ink has to fit the fill — white works
+    // on the light theme's dark amber and is unreadable on the dark theme's
+    // light one.
+    final ink = bestInkOn(accent);
+    return Semantics(
+      label: 'Private, not visible to the requester',
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: accent,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.lock, size: 12, color: ink),
+            const SizedBox(width: 3),
+            Text(
+              'PRIVATE',
+              style: TextStyle(
+                color: ink,
+                // Was 10sp — the smallest text in the app, on the one label
+                // that must not be missed.
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -244,33 +264,55 @@ class _TaskCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              InkWell(
+              // A checkbox, not a decorated icon: it announces its state, it
+              // toggles from the reader, and the 18px glyph now sits in a 48dp
+              // target instead of being an 18px one.
+              Semantics(
+                checked: entry.isTaskDone,
+                enabled: canToggle,
+                label: 'Task done',
+                // The node that hides the child's semantics must carry the
+                // child's action, or activating it from the reader does nothing.
                 onTap: canToggle ? onToggle : null,
-                borderRadius: BorderRadius.circular(4),
-                child: Icon(
-                  entry.isTaskDone
-                      ? Icons.check_box_outlined
-                      : Icons.check_box_outline_blank,
-                  size: 18,
-                  color: entry.isTaskDone
-                      ? context.glpiColors.statusSolved
-                      : theme.colorScheme.outline,
+                excludeSemantics: true,
+                child: InkWell(
+                  onTap: canToggle ? onToggle : null,
+                  borderRadius: BorderRadius.circular(24),
+                  child: TapTarget(
+                    child: Icon(
+                      entry.isTaskDone
+                          ? Icons.check_box_outlined
+                          : Icons.check_box_outline_blank,
+                      size: 20,
+                      color: entry.isTaskDone
+                          ? ensureContrast(
+                              context.glpiColors.statusSolved,
+                              theme.colorScheme.surface,
+                              minRatio: wcagAaGraphics,
+                            )
+                          : theme.colorScheme.outline,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 2),
               Text('Task', style: theme.textTheme.labelLarge),
               const Spacer(),
               if (duration.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
+                Semantics(
+                  label: 'Duration ${spokenDuration(entry.taskDuration)}',
+                  excludeSemantics: true,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(duration, style: theme.textTheme.labelMedium),
                   ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.secondaryContainer,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(duration, style: theme.textTheme.labelSmall),
                 ),
             ],
           ),

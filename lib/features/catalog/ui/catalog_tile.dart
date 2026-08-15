@@ -51,6 +51,7 @@ class CatalogTile extends ConsumerWidget {
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   color: theme.colorScheme.outline,
+                  semanticsLabel: 'Waiting to sync',
                 ),
               ),
             ),
@@ -83,6 +84,9 @@ class CatalogTile extends ConsumerWidget {
           : DueBadge(
               text: formatDueRelative(expiry),
               color: expiryColor(context, expiry),
+              // "in 12d" is read as "in twelve d", and without "expires" the
+              // number could be anything.
+              semanticsLabel: 'Expires ${spokenDueRelative(expiry)}',
             ),
       isThreeLine: (item.serial ?? '').isNotEmpty && subtitle.isNotEmpty,
       onTap: () => openCatalogItem(context, ref, item),

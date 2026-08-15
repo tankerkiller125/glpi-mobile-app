@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/a11y/a11y.dart';
 import '../../../core/models/project.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatting.dart';
+import '../../../core/widgets/accessible_refresh.dart';
 import '../../../core/widgets/due_badge.dart';
+import '../../../core/widgets/info_tile.dart';
 import '../../../core/widgets/rich_content.dart';
+import '../../../core/widgets/section_heading.dart';
 import 'project_task_sheet.dart';
 
 /// A project: progress header, planning facts, and its task tree.
@@ -52,13 +56,15 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
         ),
       ),
       body: switch (async) {
-        AsyncData(value: final p?) => RefreshIndicator(
+        AsyncData(value: final p?) => AccessibleRefresh(
           onRefresh: _refresh,
           child: _Body(project: p),
         ),
         AsyncData() => const Center(child: Text('Project not found')),
         AsyncError() => const Center(child: Text('Could not load the project')),
-        _ => const Center(child: CircularProgressIndicator()),
+        _ => const Center(
+          child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+        ),
       },
     );
   }
@@ -86,7 +92,10 @@ class _Body extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(project.name, style: theme.textTheme.titleLarge),
+              Semantics(
+                header: true,
+                child: Text(project.name, style: theme.textTheme.titleLarge),
+              ),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -134,31 +143,23 @@ class _Body extends ConsumerWidget {
                     ? '—'
                     : formatDateTime(project.planStartDate),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
+              LabelledRow(
+                icon: Icons.event_outlined,
+                label: 'Ends',
+                semanticsValue: due == null
+                    ? 'Not set'
+                    : '${formatDateTime(due)}'
+                          '${project.isComplete ? '' : ', ${spokenDueRelative(due)}'}',
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Icon(
-                      Icons.event_outlined,
-                      size: 18,
-                      color: theme.colorScheme.outline,
-                    ),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      width: 92,
-                      child: Text(
-                        'Ends',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
-                        ),
-                      ),
-                    ),
                     Text(
                       due == null ? '—' : formatDateTime(due),
                       style: theme.textTheme.bodyMedium,
                     ),
-                    if (due != null && !project.isComplete) ...[
-                      const SizedBox(width: 8),
+                    if (due != null && !project.isComplete)
                       DueBadge(
                         text: formatDueRelative(due),
                         color: colors.slaColor(
@@ -166,7 +167,6 @@ class _Body extends ConsumerWidget {
                           warn: Project.dueWarnWindow,
                         ),
                       ),
-                    ],
                   ],
                 ),
               ),
@@ -180,31 +180,21 @@ class _Body extends ConsumerWidget {
                 ),
               if (project.content.trim().isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text('Description', style: theme.textTheme.labelLarge),
+                const SectionHeading('Description'),
                 const SizedBox(height: 4),
                 RichContent(project.content),
               ],
               const SizedBox(height: 8),
               const Divider(),
-              Row(
-                children: [
-                  Text('Tasks', style: theme.textTheme.labelLarge),
-                  const SizedBox(width: 4),
-                  if (tasks.isNotEmpty)
-                    Text(
-                      '(${tasks.length})',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.outline,
-                      ),
-                    ),
-                  const Spacer(),
-                  TextButton.icon(
-                    onPressed: () =>
-                        ProjectTaskSheet.show(context, project: project),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Add task'),
-                  ),
-                ],
+              SectionHeading(
+                'Tasks',
+                count: tasks.isEmpty ? null : tasks.length,
+                trailing: TextButton.icon(
+                  onPressed: () =>
+                      ProjectTaskSheet.show(context, project: project),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add task'),
+                ),
               ),
             ],
           ),
@@ -244,76 +234,98 @@ class _TaskRow extends StatelessWidget {
         remaining != null &&
         remaining <= const Duration(days: 3);
 
+    // Depth is drawn as indentation, completion as an icon colour and progress
+    // as a trailing "40%" — none of which survives being read aloud.
+    final spoken = semanticSentence([
+      if (task.depth > 0) 'Level ${task.depth + 1}',
+      task.name,
+      if (task.isMilestone) 'milestone',
+      task.isComplete ? 'complete' : '${task.percentDone} percent done',
+      if (task.pending)
+        'waiting to sync'
+      else if ((task.assigneeName ?? '').isNotEmpty)
+        task.assigneeName,
+      if (atRisk) spokenDueRelative(due),
+    ]);
+
     return Opacity(
       opacity: task.pending ? 0.55 : 1,
-      child: InkWell(
+      child: Semantics(
+        container: true,
+        button: true,
+        label: spoken,
         onTap: () =>
             ProjectTaskSheet.show(context, project: project, task: task),
-        child: Padding(
-          // Children indent one level per depth.
-          padding: EdgeInsets.fromLTRB(16.0 + task.depth * 16, 8, 16, 8),
-          child: Row(
-            children: [
-              Icon(
-                task.isMilestone
-                    ? Icons.flag
-                    : (task.isComplete
-                          ? Icons.check_circle
-                          : Icons.radio_button_unchecked),
-                size: 18,
-                color: task.isComplete
-                    ? colors.slaOk
-                    : theme.colorScheme.outline,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      task.name,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: task.depth == 0
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (task.pending)
-                      Text(
-                        'syncing…',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
-                        ),
-                      )
-                    else if ((task.assigneeName ?? '').isNotEmpty)
-                      Text(
-                        task.assigneeName!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
-                        ),
-                      ),
-                  ],
+        excludeSemantics: true,
+        child: InkWell(
+          onTap: () =>
+              ProjectTaskSheet.show(context, project: project, task: task),
+          child: Padding(
+            // Children indent one level per depth.
+            padding: EdgeInsets.fromLTRB(16.0 + task.depth * 16, 8, 16, 8),
+            child: Row(
+              children: [
+                Icon(
+                  task.isMilestone
+                      ? Icons.flag
+                      : (task.isComplete
+                            ? Icons.check_circle
+                            : Icons.radio_button_unchecked),
+                  size: 18,
+                  color: task.isComplete
+                      ? colors.slaOk
+                      : theme.colorScheme.outline,
                 ),
-              ),
-              if (atRisk) ...[
-                DueBadge(
-                  text: formatDueRelative(due),
-                  color: colors.slaColor(
-                    remaining,
-                    warn: const Duration(days: 3),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        task.name,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: task.depth == 0
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (task.pending)
+                        Text(
+                          'syncing…',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
+                        )
+                      else if ((task.assigneeName ?? '').isNotEmpty)
+                        Text(
+                          task.assigneeName!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.outline,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 8),
-              ],
-              Text(
-                '${task.percentDone}%',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
+                if (atRisk) ...[
+                  DueBadge(
+                    text: formatDueRelative(due),
+                    color: colors.slaColor(
+                      remaining,
+                      warn: const Duration(days: 3),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  '${task.percentDone}%',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -321,6 +333,9 @@ class _TaskRow extends StatelessWidget {
   }
 }
 
+/// A read-only detail row. Delegates to the shared [InfoTile] so it reads as
+/// one "label: value" node and stacks at large text sizes like every other
+/// detail screen.
 class _Row extends StatelessWidget {
   const _Row({required this.icon, required this.label, required this.value});
 
@@ -329,26 +344,6 @@ class _Row extends StatelessWidget {
   final String value;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: theme.colorScheme.outline),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 92,
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
-              ),
-            ),
-          ),
-          Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      InfoTile(icon: icon, label: label, value: value);
 }

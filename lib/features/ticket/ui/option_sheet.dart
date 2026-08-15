@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/a11y/contrast.dart';
 import '../../../core/utils/layout.dart';
 
 /// A generic single-choice bottom sheet used for priority / urgency / type
@@ -39,9 +40,12 @@ class OptionSheet extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium,
+              child: Semantics(
+                header: true,
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
               ),
             ),
           ),
@@ -50,8 +54,20 @@ class OptionSheet extends StatelessWidget {
             ListTile(
               leading: o.color == null
                   ? null
-                  : Icon(Icons.circle, size: 14, color: o.color),
+                  : Icon(
+                      Icons.circle,
+                      size: 14,
+                      color: ensureContrast(
+                        o.color!,
+                        Theme.of(context).colorScheme.surface,
+                        minRatio: wcagAaGraphics,
+                      ),
+                    ),
               title: Text(o.label),
+              // `selected` is what makes a reader say "selected" — the trailing
+              // tick is invisible to it, and it was the only signal of which
+              // option is live.
+              selected: o.value == current,
               trailing: o.value == current
                   ? const Icon(Icons.check, size: 18)
                   : null,

@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/a11y/contrast.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatting.dart';
 import '../../../core/utils/html_text.dart';
 import '../../../core/utils/priority_matrix.dart';
+import '../../../core/widgets/info_tile.dart';
 import 'category_picker.dart';
 import 'option_sheet.dart';
 
@@ -156,40 +158,36 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
             onSelectionChanged: (s) => setState(() => _type = s.first),
           ),
           const SizedBox(height: 8),
-          _PickerTile(
+          InfoTile(
             icon: Icons.priority_high,
             label: 'Urgency',
             value: urgencyLabel(_urgency),
             onTap: _editUrgency,
+            semanticsHint: 'Choose urgency',
           ),
-          _PickerTile(
+          InfoTile(
             icon: Icons.bolt_outlined,
             label: 'Impact',
             value: urgencyLabel(_impact),
             onTap: _editImpact,
+            semanticsHint: 'Choose impact',
           ),
           // Priority is derived from urgency × impact (read-only).
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
+          LabelledRow(
+            icon: Icons.flag_outlined,
+            iconColor: ensureContrast(
+              colors.priorityColor(priority),
+              theme.colorScheme.surface,
+              minRatio: wcagAaGraphics,
+            ),
+            label: 'Priority',
+            semanticsValue:
+                '${priorityLabel(priority)}, derived from urgency and impact',
+            child: Wrap(
+              spacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Icon(
-                  Icons.flag_outlined,
-                  size: 20,
-                  color: colors.priorityColor(priority),
-                ),
-                const SizedBox(width: 16),
-                SizedBox(
-                  width: 96,
-                  child: Text(
-                    'Priority',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.outline,
-                    ),
-                  ),
-                ),
                 Text(priorityLabel(priority), style: theme.textTheme.bodyLarge),
-                const SizedBox(width: 8),
                 Text(
                   'derived',
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -200,11 +198,12 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
               ],
             ),
           ),
-          _PickerTile(
+          InfoTile(
             icon: Icons.folder_outlined,
             label: 'Category',
             value: _categoryName ?? 'None',
             onTap: _editCategory,
+            semanticsHint: 'Choose category',
           ),
           const SizedBox(height: 4),
           SwitchListTile(
@@ -221,53 +220,6 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
             label: const Text('Create ticket'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// A tappable label→value row that opens a picker (urgency/impact/category).
-class _PickerTile extends StatelessWidget {
-  const _PickerTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: theme.colorScheme.outline),
-            const SizedBox(width: 16),
-            SizedBox(
-              width: 96,
-              child: Text(
-                label,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.outline,
-                ),
-              ),
-            ),
-            Expanded(child: Text(value, style: theme.textTheme.bodyLarge)),
-            Icon(
-              Icons.edit_outlined,
-              size: 18,
-              color: theme.colorScheme.outline,
-            ),
-          ],
-        ),
       ),
     );
   }

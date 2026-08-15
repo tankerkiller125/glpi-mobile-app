@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../../../core/a11y/a11y.dart';
 import '../../../core/models/catalog_item.dart';
 import '../../../core/providers.dart';
 import 'catalog_tile.dart';
@@ -67,6 +68,7 @@ class _CatalogScanScreenState extends ConsumerState<CatalogScanScreen> {
 
     if (result.isEmpty) {
       setState(() => _message = 'No asset with code "$trimmed"');
+      announce(context, 'No asset with code $trimmed');
       await _scanner.start();
       return;
     }
@@ -76,6 +78,9 @@ class _CatalogScanScreenState extends ConsumerState<CatalogScanScreen> {
       return;
     }
     setState(() => _matches = result);
+    // The list appears below the fold; say how many so the next swipe has a
+    // destination.
+    announce(context, '${result.length} matching assets');
   }
 
   Future<void> _onDetect(BarcodeCapture capture) async {
@@ -98,12 +103,25 @@ class _CatalogScanScreenState extends ConsumerState<CatalogScanScreen> {
         children: [
           SizedBox(
             height: 260,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                MobileScanner(controller: _scanner, onDetect: _onDetect),
-                if (_busy) const Center(child: CircularProgressIndicator()),
-              ],
+            child: Semantics(
+              // Unlabelled, this is a 260px mystery above the field that
+              // actually works without sight.
+              label:
+                  'Camera viewfinder. Point it at the asset label, or type '
+                  'the code below.',
+              excludeSemantics: true,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  MobileScanner(controller: _scanner, onDetect: _onDetect),
+                  if (_busy)
+                    const Center(
+                      child: CircularProgressIndicator(
+                        semanticsLabel: 'Looking up',
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
           Padding(
@@ -133,9 +151,12 @@ class _CatalogScanScreenState extends ConsumerState<CatalogScanScreen> {
           if (_message != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                _message!,
-                style: TextStyle(color: theme.colorScheme.error),
+              child: Semantics(
+                liveRegion: true,
+                child: Text(
+                  _message!,
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
               ),
             ),
           if (_matches.isNotEmpty)

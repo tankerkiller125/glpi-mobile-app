@@ -1,9 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../../../core/a11y/a11y.dart';
 import '../../../core/auth/auth_controller.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../onboarding_draft.dart';
@@ -25,6 +27,21 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   bool _busy = false;
   bool _handled = false;
   String? _error;
+
+  bool _modeChosen = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // A viewfinder is the one control a screen-reader user cannot operate:
+    // aiming a camera is a visual feedback loop, and nothing announces "nearly
+    // there". Start on the manual code instead — the toggle still swaps back,
+    // and everyone else still lands on the scanner.
+    if (!_modeChosen && MediaQuery.accessibleNavigationOf(context)) {
+      _modeChosen = true;
+      _manualMode = true;
+    }
+  }
 
   @override
   void dispose() {
@@ -88,11 +105,15 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       // Router redirect takes over on the auth-state change.
     } on Exception {
       if (!mounted) return;
+      final message = AppLocalizations.of(context).pairFailed;
       setState(() {
         _busy = false;
         _handled = false;
-        _error = AppLocalizations.of(context).pairFailed;
+        _error = message;
       });
+      // On the scan path the failure text sits under a camera preview nobody is
+      // reading; say it.
+      announce(context, message, assertiveness: Assertiveness.assertive);
       if (!_manualMode) {
         await _scanner.start();
       }
@@ -141,12 +162,17 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
               constraints: const BoxConstraints(maxWidth: 520, maxHeight: 520),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    MobileScanner(controller: _scanner, onDetect: _onDetect),
-                    if (_busy) const _Scrim(),
-                  ],
+                child: Semantics(
+                  // Without a label this is a large unnamed rectangle.
+                  label: 'Camera viewfinder. Point it at the QR code in GLPI.',
+                  excludeSemantics: true,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      MobileScanner(controller: _scanner, onDetect: _onDetect),
+                      if (_busy) const _Scrim(),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -155,10 +181,13 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
         if (_error != null)
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(
-              _error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-              textAlign: TextAlign.center,
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
       ],
@@ -195,7 +224,12 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          // A bare spinner inside a button leaves it unnamed
+                          // exactly when the user is waiting to hear something.
+                          semanticsLabel: 'Pairing',
+                        ),
                       )
                     : Text(l.pairAction),
               ),
@@ -214,7 +248,9 @@ class _Scrim extends StatelessWidget {
   Widget build(BuildContext context) {
     return const ColoredBox(
       color: Color(0x88000000),
-      child: Center(child: CircularProgressIndicator()),
+      child: Center(
+        child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+      ),
     );
   }
 }

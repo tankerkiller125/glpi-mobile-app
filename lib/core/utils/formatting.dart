@@ -63,6 +63,64 @@ String formatDuration(int? seconds) {
   return '${m}m';
 }
 
+/// `3` + `day` → `3 days`. Spoken labels can't lean on the reader to expand a
+/// unit, and "1 days" is the kind of thing that makes a screen reader sound
+/// broken.
+String _plural(int n, String unit) => '$n $unit${n == 1 ? '' : 's'}';
+
+/// Screen-reader form of [relativeAge]: `4 hours ago`, `3 days ago`.
+///
+/// The visible label is deliberately terse — `4h` reads as "four h" out loud,
+/// and `2mo` as "two mo". Every place that shows the compact form passes this
+/// through the semantics instead.
+String spokenAge(DateTime? when, {DateTime? now}) {
+  if (when == null) return '';
+  final ref = now ?? DateTime.now();
+  var diff = ref.difference(when);
+  if (diff.isNegative) diff = Duration.zero;
+  if (diff.inMinutes < 1) return 'just now';
+  if (diff.inMinutes < 60) return '${_plural(diff.inMinutes, 'minute')} ago';
+  if (diff.inHours < 24) return '${_plural(diff.inHours, 'hour')} ago';
+  if (diff.inDays < 7) return '${_plural(diff.inDays, 'day')} ago';
+  if (diff.inDays < 30) return '${_plural(diff.inDays ~/ 7, 'week')} ago';
+  if (diff.inDays < 365) return '${_plural(diff.inDays ~/ 30, 'month')} ago';
+  return '${_plural(diff.inDays ~/ 365, 'year')} ago';
+}
+
+/// Screen-reader form of [formatDueRelative]: `due in 3 hours 20 minutes`,
+/// `overdue by 2 days`.
+String spokenDueRelative(DateTime? due, {DateTime? now}) {
+  if (due == null) return '';
+  final ref = now ?? DateTime.now();
+  final diff = due.difference(ref);
+  final overdue = diff.isNegative;
+  final d = diff.abs();
+  final String mag;
+  if (d.inMinutes < 1) {
+    return 'due now';
+  } else if (d.inMinutes < 60) {
+    mag = _plural(d.inMinutes, 'minute');
+  } else if (d.inHours < 24) {
+    final m = d.inMinutes % 60;
+    mag = m > 0
+        ? '${_plural(d.inHours, 'hour')} ${_plural(m, 'minute')}'
+        : _plural(d.inHours, 'hour');
+  } else {
+    mag = _plural(d.inDays, 'day');
+  }
+  return overdue ? 'overdue by $mag' : 'due in $mag';
+}
+
+/// Screen-reader form of [formatDuration]: `1 hour 30 minutes`.
+String spokenDuration(int? seconds) {
+  if (seconds == null || seconds <= 0) return '';
+  final h = seconds ~/ 3600;
+  final m = (seconds % 3600) ~/ 60;
+  if (h > 0 && m > 0) return '${_plural(h, 'hour')} ${_plural(m, 'minute')}';
+  if (h > 0) return _plural(h, 'hour');
+  return _plural(m, 'minute');
+}
+
 /// GLPI status id → short label. Ids differ per ITIL type (Changes add
 /// evaluation/testing/…, Problems use different wording), so the type decides.
 String statusLabel(int status, {String itemtype = itilTicket}) =>

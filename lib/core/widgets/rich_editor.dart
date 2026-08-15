@@ -55,15 +55,20 @@ class _RichEditorState extends State<RichEditor> {
             minHeight: widget.minLines * 22.0,
             maxHeight: 320,
           ),
-          child: QuillEditor.basic(
-            controller: widget.controller.quill,
-            focusNode: _focus,
-            config: QuillEditorConfig(
-              placeholder: widget.hint,
-              autoFocus: widget.autofocus,
-              expands: false,
-              scrollable: true,
-              padding: EdgeInsets.zero,
+          // The editor is a custom surface, not a TextField: without a name it
+          // is announced as an anonymous editable region.
+          child: Semantics(
+            label: widget.hint ?? 'Formatted text',
+            child: QuillEditor.basic(
+              controller: widget.controller.quill,
+              focusNode: _focus,
+              config: QuillEditorConfig(
+                placeholder: widget.hint,
+                autoFocus: widget.autofocus,
+                expands: false,
+                scrollable: true,
+                padding: EdgeInsets.zero,
+              ),
             ),
           ),
         ),

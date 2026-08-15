@@ -6,6 +6,7 @@ import '../../../core/utils/formatting.dart';
 import '../../../core/utils/html_text.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/rich_content.dart';
+import '../../../core/widgets/section_heading.dart';
 import '../../ticket/ui/compose_sheet.dart';
 
 /// Read a knowledge base article. When opened from a ticket/change/problem, a
@@ -65,7 +66,9 @@ class _KbArticleScreenState extends ConsumerState<KbArticleScreen> {
       // A knowledge-base article read across a full tablet width is a wall of
       // text; cap the measure.
       body: article == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+            )
           : ReadableWidth(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -102,7 +105,7 @@ class _KbArticleScreenState extends ConsumerState<KbArticleScreen> {
                   ),
                   const SizedBox(height: 24),
                   const Divider(),
-                  Text('Comments', style: theme.textTheme.labelLarge),
+                  const SectionHeading('Comments'),
                   const SizedBox(height: 4),
                   if (comments.isEmpty)
                     Text(

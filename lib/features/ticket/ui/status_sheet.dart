@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/a11y/contrast.dart';
 import '../../../core/api/itil_type.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatting.dart';
@@ -42,9 +43,12 @@ class StatusSheet extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                'Change status',
-                style: Theme.of(context).textTheme.titleMedium,
+              child: Semantics(
+                header: true,
+                child: Text(
+                  'Change status',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
               ),
             ),
           ),
@@ -54,9 +58,15 @@ class StatusSheet extends StatelessWidget {
               leading: Icon(
                 Icons.circle,
                 size: 14,
-                color: colors.statusColor(s),
+                color: ensureContrast(
+                  colors.statusColor(s),
+                  Theme.of(context).colorScheme.surface,
+                  minRatio: wcagAaGraphics,
+                ),
               ),
               title: Text(statusLabel(s, itemtype: itemtype)),
+              // The tick is decoration; `selected` is what says "current".
+              selected: s == current,
               trailing: s == current ? const Icon(Icons.check, size: 18) : null,
               onTap: () => Navigator.pop(context, s),
             ),
