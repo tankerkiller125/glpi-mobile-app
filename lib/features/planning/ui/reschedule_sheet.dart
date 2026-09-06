@@ -5,6 +5,7 @@ import '../../../core/models/planning_event.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/date_time_field.dart';
+import '../../change_calendar/ui/freeze_warning.dart';
 
 /// Move a planned event. Works for any planning type — ITIL tasks, project
 /// tasks, reminders and standalone events — and queues the change offline.
@@ -17,6 +18,7 @@ class RescheduleSheet extends ConsumerStatefulWidget {
     BuildContext context, {
     required PlanningEvent event,
   }) => showModalBottomSheet<void>(
+    useSafeArea: true,
     context: context,
     constraints: sheetConstraints(context),
     isScrollControlled: true,
@@ -79,6 +81,9 @@ class _RescheduleSheetState extends ConsumerState<RescheduleSheet> {
             value: _end,
             onChanged: (v) => setState(() => _end = v),
           ),
+          // Courtesy heads-up when the picked window crosses a change
+          // freeze (renders nothing without the glpichange capability).
+          FreezeWarning(begin: _begin, end: _end),
           if (isTask) ...[
             const SizedBox(height: 8),
             SegmentedButton<int>(

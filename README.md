@@ -223,7 +223,18 @@ use Accepted / Under observation).
 New tickets are filed through **GLPI's own Service Catalog forms**, not an
 app-invented field set, so your instance's questions, mandatory rules,
 visibility conditions and destination mapping apply exactly as they do on the
-web. The app renders every shipped question type (text, number, email, choice
+web.
+
+**And it is arranged the way your instance arranged it.** The catalog is a
+category tree, one screen per level — Back is the breadcrumb — with search
+across every category, and knowledge-base articles listed beside the forms just
+as the portal lists them. Two decisions are read from the server rather than
+made here: GLPI's *Expand categories in the service catalog* entity setting
+(a category is either a section with its forms already under it, or a row you
+open) and the ordering (pinned first, then categories, then the entity's sort
+strategy). The artwork is GLPI's own illustrations, not an icon set invented
+for the app — a technician filing a request from a phone should be looking at
+the same pictures as the person who files it from the portal. The app renders every shipped question type (text, number, email, choice
 lists, GLPI dropdowns, urgency, request type, date-time, actors, user devices,
 files) and evaluates conditions live.
 
@@ -261,6 +272,79 @@ creates *and* links in one offline-capable gesture; **link asset** on any ITIL
 object with search-as-you-type; **reserve** on reservable assets; expiry badges
 on contracts, certificates and licences; and tap-to-call / mail / maps on
 suppliers and contacts.
+
+### Server plugins the app can use
+
+Some of what the app offers exists only when the server runs the matching
+companion plugin. It asks the server once per session which of them are
+installed *and which this user may use* (`GET /GlpiMobile/capabilities`), and
+shows or hides whole areas accordingly — so one build works against every mix of
+plugins a fleet is running, and a technician never sees a control that will
+refuse them. The last-known answer is cached, so gating still works offline.
+
+| Plugin | What the app gains |
+| --- | --- |
+| **glpi-signal** | Monitoring alerts with acknowledge and close, and the on-call rota. |
+| **glpi-major** | Major incidents: declare from a ticket, attach tickets, post updates, resolve. |
+| **glpi-kedb** | Known-error offers on a ticket ("use workaround" stages the text into the reply box), plus the searchable library. |
+| **glpi-entitle** | The cover card on a ticket: which contract pays for this work, and what is not covered. |
+| **glpi-change** | The change calendar, a change's scheduling picture, and active freezes. |
+| **glpi-ai** | The assistant, the drafted solution, the triage suggestion, and reply review — below. |
+| **glpi-sop** | The procedures attached to a ticket, answered step by step — below. |
+| **glpi-presence** | Who else is on this ticket, who is typing, and who has picked the work up. |
+
+#### The assistant (glpi-ai)
+
+A troubleshooting conversation with the model your instance is configured for,
+opened from the drawer or **from the ticket you are looking at** — the context
+is resolved and rights-checked server-side, so a technician standing in front of
+the problem never has to describe the ticket they already have open.
+
+The answer **streams**. A tool-using run is four to eight vendor round trips and
+takes the better part of a minute; the app shows which turn is running, which
+tool is being consulted and the words as they arrive, because a still spinner
+for that long reads as a crash — and a backgrounded app is a killed request.
+Under each answer sits the trail of what the model actually looked at, which is
+the difference between an answer from the machine and an answer from the model's
+general knowledge. Past conversations are listed and resumable: a browser keeps
+the panel open across navigation and a phone does not.
+
+On a ticket the app also offers, where the server has each switched on:
+
+- **Draft a solution** — the draft is read on screen and moved into the reply
+  box; it is never sent by the app. Used or discarded is recorded, which is the
+  entire measurement of whether the feature is any good.
+- **Suggested triage** — category, urgency, impact and procedure proposals, each
+  applied or dismissed on its own, shown against what the ticket says now.
+- **Check this reply** — reads what you have typed before it goes and says what
+  it would stop a colleague about (internal detail, unexplained jargon, no next
+  step, tone), quoting your own words back. A clean verdict sends straight away;
+  nothing is ever rewritten for you.
+
+#### Procedures (glpi-sop)
+
+The checklists your instance attaches to tickets, answered *while doing the
+work* — which is the point of having them on a phone, since a good share of that
+work happens in front of a rack. Steps show their branch numbering, their
+guidance and who answered what; checkboxes, yes/no, text, numbers, choices,
+dates and multi-choice are answered in place, a step can be skipped with a
+reason or annotated, and a ticket-step raises its ticket.
+
+Answers are **not** queued offline, unlike ticket writes: a step marked done is
+a compliance claim about a moment, the server decides whether the answer is even
+valid, and a queued answer that fails validation an hour later — after you have
+left the site — is worse than one you could not give. Every answer comes back as
+the whole run recomputed, because one answer can open a branch, close another,
+and unblock the ticket.
+
+#### Presence (glpi-presence)
+
+Who else has this ticket open, who is typing, and who has claimed the work —
+with claim, take-over and hand-back. The person on a phone is the one out at a
+site, least likely to know what the office already started. The app announces
+itself far more slowly than the web bar does (a phone screen is off most of the
+time, and radio wake-ups cost battery); the server expires presence on its own
+TTL, so a slow beat simply reads as coarser arrival and departure.
 
 ### Formatted text
 

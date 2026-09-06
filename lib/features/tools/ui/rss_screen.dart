@@ -62,6 +62,7 @@ class RssScreen extends ConsumerWidget {
     final name = TextEditingController();
     final url = TextEditingController();
     final ok = await showModalBottomSheet<bool>(
+      useSafeArea: true,
       context: context,
       constraints: sheetConstraints(context),
       isScrollControlled: true,

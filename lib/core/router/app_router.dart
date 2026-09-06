@@ -2,14 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/alerts/ui/alert_detail_screen.dart';
+import '../../features/alerts/ui/alerts_screen.dart';
+import '../../features/assistant/ui/assistant_screen.dart';
 import '../../features/auth/ui/context_screen.dart';
 import '../../features/auth/ui/scan_screen.dart';
 import '../../features/auth/ui/server_screen.dart';
 import '../../features/catalog/ui/catalog_detail_screen.dart';
 import '../../features/catalog/ui/catalog_hub_screen.dart';
 import '../../features/catalog/ui/catalog_list_screen.dart';
+import '../../features/change_calendar/ui/change_calendar_screen.dart';
 import '../../features/forms/ui/dynamic_form_screen.dart';
 import '../../features/forms/ui/service_catalog_screen.dart';
+import '../../features/kedb/ui/kedb_detail_screen.dart';
+import '../../features/kedb/ui/kedb_screen.dart';
+import '../../features/major/ui/major_detail_screen.dart';
+import '../../features/major/ui/major_screen.dart';
 import '../../features/planning/ui/planning_screen.dart';
 import '../../features/projects/ui/project_detail_screen.dart';
 import '../../features/projects/ui/projects_screen.dart';
@@ -17,6 +25,7 @@ import '../../features/queue/queue_providers.dart';
 import '../../features/queue/ui/scope_list_view.dart';
 import '../../features/settings/ui/settings_screen.dart';
 import '../../features/shell/home_shell.dart';
+import '../../features/sop/ui/sop_run_screen.dart';
 import '../../features/sync_ui/ui/needs_attention_screen.dart';
 import '../../features/ticket/ui/create_ticket_screen.dart';
 import '../../features/ticket/ui/ticket_detail_screen.dart';
@@ -47,6 +56,30 @@ class Routes {
   static const catalog = '/catalog';
 
   static String form(int formId) => '/catalog/$formId';
+
+  /// One level of the service-catalog tree. The name rides along so the app bar
+  /// is right on the first frame rather than after the fetch.
+  static String catalogCategory(int categoryId, String name) =>
+      '$catalog?category=$categoryId&name=${Uri.encodeComponent(name)}';
+
+  // Optional server-plugin modules (drawer destinations, capability-gated).
+  static const alerts = '/alerts';
+  static const assistant = '/assistant';
+  static const major = '/major';
+  static const kedb = '/kedb';
+  static const changeCalendar = '/changes/calendar';
+
+  static String alert(int serverId) => '/alerts/$serverId';
+
+  /// The assistant, opened on a record. The context rides in the query string
+  /// so the plain `/assistant` route stays a valid deep link and a push target.
+  static String assistantOn(String itemtype, int serverId) =>
+      '$assistant?itemtype=$itemtype&items_id=$serverId';
+
+  /// One procedure run (glpi-sop).
+  static String sopRun(int runId) => '/sop/$runId';
+  static String majorIncident(int serverId) => '/major/$serverId';
+  static String knownError(int serverId) => '/kedb/$serverId';
 
   // Tools / Assets / Management modules (drawer destinations).
   static const planning = '/planning';
@@ -131,6 +164,76 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: Routes.settings,
         parentNavigatorKey: rootNavigatorKey,
         builder: (_, _) => const SettingsScreen(),
+      ),
+      // Optional server-plugin modules. Always registered — deep links and
+      // push routes must resolve even when the capability is absent; the
+      // screens themselves render a graceful "unavailable" state then.
+      GoRoute(
+        path: Routes.alerts,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (_, _) => const AlertsScreen(),
+      ),
+      GoRoute(
+        path: '/alerts/:alertId',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => AlertDetailScreen(
+          alertId: int.parse(state.pathParameters['alertId']!),
+        ),
+      ),
+      GoRoute(
+        path: Routes.major,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (_, _) => const MajorScreen(),
+      ),
+      GoRoute(
+        path: '/major/:incidentId',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => MajorDetailScreen(
+          incidentId: int.parse(state.pathParameters['incidentId']!),
+        ),
+      ),
+      GoRoute(
+        path: Routes.kedb,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => KedbScreen(
+          sourceTicketLocalId: state.uri.queryParameters['source'],
+        ),
+      ),
+      GoRoute(
+        path: '/kedb/:keId',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => KedbDetailScreen(
+          keId: int.parse(state.pathParameters['keId']!),
+          sourceTicketLocalId: state.uri.queryParameters['source'],
+        ),
+      ),
+      GoRoute(
+        path: Routes.assistant,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) {
+          final itemtype = state.uri.queryParameters['itemtype'];
+          final itemsId = int.tryParse(
+            state.uri.queryParameters['items_id'] ?? '',
+          );
+          // Both absent is the general conversation, which is what the drawer
+          // opens; a half-specified context degrades to that rather than to an
+          // error.
+          return AssistantScreen(
+            itemtype: itemsId == null ? null : itemtype,
+            itemsId: itemtype == null ? null : itemsId,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/sop/:runId',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) =>
+            SopRunScreen(runId: int.parse(state.pathParameters['runId']!)),
+      ),
+      GoRoute(
+        path: Routes.changeCalendar,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (_, _) => const ChangeCalendarScreen(),
       ),
       // Tools modules.
       GoRoute(
@@ -229,7 +332,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.catalog,
         parentNavigatorKey: rootNavigatorKey,
-        builder: (_, _) => const ServiceCatalogScreen(),
+        builder: (context, state) => ServiceCatalogScreen(
+          categoryId:
+              int.tryParse(state.uri.queryParameters['category'] ?? '') ?? 0,
+          title: state.uri.queryParameters['name'],
+        ),
       ),
       GoRoute(
         path: '/catalog/:formId',

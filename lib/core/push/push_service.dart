@@ -34,8 +34,8 @@ const _androidChannel = AndroidNotificationChannel(
   importance: Importance.high,
 );
 
-/// Decode a UnifiedPush payload (`{ticket_id,title,body}`), or null if it can't
-/// be decrypted/parsed.
+/// Decode a UnifiedPush payload (`{ticket_id,title,body}` plus an optional
+/// `route` deep-link path), or null if it can't be decrypted/parsed.
 Map<String, Object?>? _decodePush(PushMessage message) {
   if (!message.decrypted) return null;
   try {
@@ -46,21 +46,27 @@ Map<String, Object?>? _decodePush(PushMessage message) {
 }
 
 /// Show a ticket notification. Shared by the foreground service and the
-/// killed-app background isolate. The payload carries the server ticket id so a
-/// tap can deep-link.
+/// killed-app background isolate. The payload carries the deep-link `route`
+/// when the server sent one, falling back to the server ticket id, so a tap
+/// can deep-link either way.
 Future<void> _showTicketNotification(
   FlutterLocalNotificationsPlugin local,
   Map<String, Object?> data,
 ) async {
   final ticketId = (data['ticket_id'] as num?)?.toInt();
+  final route = switch (data['route']) {
+    final String r when r.startsWith('/') => r,
+    _ => null,
+  };
   await local.show(
-    id: ticketId ?? 0,
+    // Android notification ids are 32-bit; fold a route into that range.
+    id: ticketId ?? (route == null ? 0 : route.hashCode & 0x7fffffff),
     title: (data['title'] as String?) ?? 'GLPI',
     body: (data['body'] as String?) ?? '',
     notificationDetails: const NotificationDetails(
       android: _androidNotifDetails,
     ),
-    payload: ticketId?.toString(),
+    payload: route ?? ticketId?.toString(),
   );
 }
 
@@ -205,19 +211,28 @@ class PushService {
 
     // Background/killed: FCM shows the notification; a tap routes here.
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      final id = int.tryParse('${message.data['ticket_id'] ?? ''}');
-      if (id != null) unawaited(_openTicket(id));
+      final payload = _tapPayloadOf(message.data);
+      if (payload != null) unawaited(_openPayload(payload));
     });
     final initial = await messaging.getInitialMessage();
-    final launchId = int.tryParse('${initial?.data['ticket_id'] ?? ''}');
-    if (launchId != null) {
+    final launchPayload = initial == null ? null : _tapPayloadOf(initial.data);
+    if (launchPayload != null) {
       unawaited(
         Future<void>.delayed(
           const Duration(milliseconds: 600),
-          () => _openTicket(launchId),
+          () => _openPayload(launchPayload),
         ),
       );
     }
+  }
+
+  /// What a notification tap should open: the deep-link `route` when the
+  /// server sent one, else the ticket id as a string. Null means no deep link.
+  String? _tapPayloadOf(Map<String, dynamic> data) {
+    final route = data['route'];
+    if (route is String && route.startsWith('/')) return route;
+    final id = int.tryParse('${data['ticket_id'] ?? ''}');
+    return id?.toString();
   }
 
   Future<void> _registerFcm(String token) async {
@@ -235,11 +250,15 @@ class PushService {
     }
   }
 
-  Map<String, Object?> _fcmPayload(RemoteMessage message) => {
-    'ticket_id': int.tryParse('${message.data['ticket_id'] ?? ''}'),
-    'title': message.notification?.title ?? 'GLPI',
-    'body': message.notification?.body ?? '',
-  };
+  Map<String, Object?> _fcmPayload(RemoteMessage message) {
+    final route = message.data['route'];
+    return {
+      'ticket_id': int.tryParse('${message.data['ticket_id'] ?? ''}'),
+      if (route is String) 'route': route,
+      'title': message.notification?.title ?? 'GLPI',
+      'body': message.notification?.body ?? '',
+    };
+  }
 
   /// Called on sign-out. Best-effort: local unregister always; server-side only
   /// if the API is still available (tokens may already be gone on logout).
@@ -345,8 +364,10 @@ class PushService {
     await _local.initialize(
       settings: settings,
       onDidReceiveNotificationResponse: (response) {
-        final id = int.tryParse(response.payload ?? '');
-        if (id != null) unawaited(_openTicket(id));
+        final payload = response.payload;
+        if (payload != null && payload.isNotEmpty) {
+          unawaited(_openPayload(payload));
+        }
       },
     );
     final android = _local
@@ -366,17 +387,29 @@ class PushService {
   Future<void> _handleLaunchFromNotification() async {
     final launch = await _local.getNotificationAppLaunchDetails();
     if (launch?.didNotificationLaunchApp ?? false) {
-      final id = int.tryParse(launch!.notificationResponse?.payload ?? '');
-      // Defer so the app's initial route settles before we stack the ticket.
-      if (id != null) {
+      final payload = launch!.notificationResponse?.payload;
+      // Defer so the app's initial route settles before we stack the target.
+      if (payload != null && payload.isNotEmpty) {
         unawaited(
           Future<void>.delayed(
             const Duration(milliseconds: 600),
-            () => _openTicket(id),
+            () => _openPayload(payload),
           ),
         );
       }
     }
+  }
+
+  /// A notification tap's payload is either a deep-link route (leading `/`,
+  /// from the server's `route` field) or the legacy bare ticket id.
+  Future<void> _openPayload(String payload) async {
+    if (payload.startsWith('/')) {
+      final context = rootNavigatorKey.currentContext;
+      if (context != null) unawaited(context.push(payload));
+      return;
+    }
+    final id = int.tryParse(payload);
+    if (id != null) await _openTicket(id);
   }
 
   Future<void> _openTicket(int serverId) async {

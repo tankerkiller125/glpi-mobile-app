@@ -51,12 +51,16 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   }
 
   Future<void> _refresh() async {
+    // Read everything up front: the awaits below can outlive this widget
+    // (cold start redirects to onboarding mid-flight), and touching `ref`
+    // after unmount throws.
+    final tickets = ref.read(ticketRepositoryProvider);
+    final references = ref.read(referenceRepositoryProvider);
+    final module = ref.read(itilModuleProvider);
     try {
-      await ref
-          .read(ticketRepositoryProvider)
-          ?.refreshQueue(itemtype: ref.read(itilModuleProvider));
+      await tickets?.refreshQueue(itemtype: module);
       // Populate the dropdown cache (categories) for edit pickers.
-      await ref.read(referenceRepositoryProvider)?.refreshAll();
+      await references?.refreshAll();
     } on Exception {
       // Cached lists keep showing; pull-to-refresh surfaces the offline notice.
     }
@@ -87,6 +91,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     // old entity are already gone by this point; this refills them.
     ref.listen(authControllerProvider, (previous, next) {
       if (previous == null) return;
+      // Only a Ready→Ready change is a *switch*. Restore lands here too
+      // (Restoring→Ready) — announcing "Switched to <entity>" on every cold
+      // start says something happened when nothing did, and initState's
+      // refresh already covers that path.
+      if (previous is! Ready) return;
       if (_contextOf(previous) == _contextOf(next)) return;
       final entity = switch (next) {
         Ready(:final account) => account.entityName ?? '',
@@ -117,6 +126,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     );
     final cloud = ref.watch(cloudStateProvider);
     final size = windowSizeOf(context);
+    final nav = navStyleOf(context);
 
     return Scaffold(
       drawer: const PrimaryNavDrawer(),
@@ -205,14 +215,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       body: SyncScope(
         child: Row(
           children: [
-            // Wide windows get a rail: a bottom bar wastes the short axis and
-            // puts the scopes far from the content on a tablet.
-            if (size.hasRail)
+            // Bar or rail, and collapsed or labelled, is Material's adaptive
+            // rule rather than ours — see navStyleOf.
+            if (nav.isRail)
               NavigationRail(
-                extended: size == WindowSize.expanded,
+                extended: nav == NavStyle.extendedRail,
                 selectedIndex: widget.shell.currentIndex,
                 onDestinationSelected: _goBranch,
-                labelType: size == WindowSize.expanded
+                labelType: nav == NavStyle.extendedRail
                     ? NavigationRailLabelType.none
                     : NavigationRailLabelType.all,
                 destinations: [
@@ -254,7 +264,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               tooltip: 'New ticket',
               child: const Icon(Icons.add),
             ),
-      bottomNavigationBar: size.hasRail
+      bottomNavigationBar: nav.isRail
           ? null
           : NavigationBar(
               selectedIndex: widget.shell.currentIndex,

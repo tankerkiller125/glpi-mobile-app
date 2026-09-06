@@ -15,6 +15,7 @@ class TicketDetail {
     required this.type,
     required this.categoryId,
     required this.categoryName,
+    this.entityId,
     required this.entityName,
     required this.locationName,
     required this.recipientName,
@@ -36,6 +37,9 @@ class TicketDetail {
   final int type; // 1 Incident, 2 Request
   final int? categoryId;
   final String? categoryName;
+
+  /// GLPI entity id — the key for entity-scoped extras (entitlement).
+  final int? entityId;
   final String? entityName;
   final String? locationName;
   final String? recipientName; // "Created by"

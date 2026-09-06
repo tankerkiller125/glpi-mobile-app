@@ -92,6 +92,10 @@ Update the Status column as you go: ✅ done · 🟡 in progress · ⬜ planned 
 | Management | Tier 1 (Documents, Contracts, Suppliers, Contacts, Licenses, Certificates) | ✅ **(7)** |
 | Management | Tier 2 (Budgets, Lines, Domains, Datacenters, Clusters, Appliances, Databases) | ✅ **(8)** |
 | Carried over | `/MyWork` endpoint; status-change push; iOS/APNs build (needs Mac); generic file picking | ⬜ backlog |
+| Companion plugins | signal (alerts, on-call), major, kedb, entitle, change calendar | ✅ |
+| Companion plugins | glpi-ai: assistant (streamed), solution draft, triage, reply review | ✅ **(9)** |
+| Companion plugins | glpi-sop: procedure runs answered on the ticket | ✅ **(9)** |
+| Companion plugins | glpi-presence: who is here, who is typing, who has claimed it | ✅ **(9)** |
 
 **Verified API surface** (re-verify with curl before relying on it):
 - `/Assistance/{Ticket|Change|Problem}` CRUD + `/Timeline` + `/TeamMember`;
@@ -695,3 +699,62 @@ credential; the plugin keeps the GLPI refresh token
   bodies that start with `{` or `<`.
 - **The HL API ignores unknown write fields silently** (see the deviation
   above) — always verify a PATCH by reading the row back, not by the 200.
+
+---
+
+## Phase 9 — Companion-plugin surfaces: AI, procedures, presence
+
+Server side lives in each plugin (`src/MobileController.php` + a
+`glpimobile_capabilities` hook), never in glpimobile: a plugin that owns a
+feature owns its rights, and a controller in the app plugin would be a second
+copy of them drifting from the first.
+
+**What landed**
+
+- **glpi-ai** — `/GlpiAi/{status,threads,tickets/{id}/draft,tickets/{id}/triage,
+  reply/review}`, plus `POST /GlpiAi/threads/{id}/stream`, which is a Symfony
+  `StreamedResponse` wrapped in the HL API's `StreamedResponseWrapper` and emits
+  the plugin's own `Progress` events. App side: `AssistantScreen` (drawer and
+  ticket entry points), `AiTicketSection` (draft, triage), and a review button
+  in `Composer`.
+- **glpi-sop** — `/GlpiSop/item/{itemtype}/{id}/runs`, `/GlpiSop/runs/{id}` and
+  the five per-step writes. App side: `SopSection` on the ticket and
+  `SopRunScreen` at `/sop/{runId}`.
+- **glpi-presence** — `/GlpiPresence/item/{itemtype}/{id}` plus heartbeat,
+  leave, claim, takeover, release. App side: `PresenceBar` on the ticket, with a
+  45-second beat.
+
+**Device-verified on the emulator** (`glpi_dev`, Android 16, 1080×2400) against
+the live dev server: drawer entry, a streamed answer with a `read_ticket` call
+and its trail, the history sheet listing threads started from the web panel,
+the procedure section and run screen (checkbox + yes/no answers round-tripping
+and the counters moving), the run log, the presence bar with a simulated second
+technician (typing, claim, take-over, hand-back), reply review flagging two
+unexplained terms, triage run + dismiss, and a solution draft + discard. Two
+defects found there and fixed:
+
+- the assistant showed dio's own words when the server was unreachable ("This
+  indicates an error which most likely cannot be solved by the library"); it
+  now says what is wrong in the app's voice, behind a `GlpiNetworkError` branch;
+- a screen first opened offline stayed offline for the session, because the
+  controller is deliberately kept alive so the transcript survives navigation
+  and therefore never re-opens the thread on its own. The failure states now
+  carry **Retry**.
+
+**Three things worth remembering**
+
+1. **The HL API caches its route table** (`hlapi_routes` in `$GLPI_CACHE`).
+   A new plugin controller does not appear until
+   `php bin/console cache:clear` — the symptom is a 404 with
+   `ERROR_ITEM_NOT_FOUND` from a route whose class loads fine.
+2. **Streaming works over the HL API**, and only through
+   `StreamedResponseWrapper`: the router stringifies an ordinary PSR-7 body, and
+   the callback runs after its output buffers are torn down. Close the PHP
+   session before the run (`session_write_close()`), exactly as the web endpoint
+   does.
+3. **None of these three is offline-first, and that is the design.** An
+   assistant answer nobody is waiting for is not worth a provider call an hour
+   later; a procedure answer is a compliance claim the server validates; a
+   heartbeat is meaningless once it is stale. Ticket writes remain queued as
+   before.
+

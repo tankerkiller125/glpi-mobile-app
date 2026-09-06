@@ -87,12 +87,55 @@ class AuthController extends Notifier<AuthState> {
     }
     _wire(account);
     if (account.hasContext) {
+      if (account.userId == 0) {
+        // A sign-in interrupted mid-flight can leave the placeholder row
+        // (no identity) with a context already picked: heal it from the
+        // session instead of showing a nameless account forever.
+        try {
+          final session = await _fetchSession();
+          final healed = Account(
+            serverUrl: account.serverUrl,
+            userId: session.userId,
+            username: session.username,
+            displayName: session.friendlyName.isNotEmpty
+                ? session.friendlyName
+                : session.username,
+            profileId: account.profileId,
+            profileName: account.profileName,
+            entityId: account.entityId,
+            entityName: account.entityName,
+            entityRecursive: account.entityRecursive,
+            groupIds: session.groupIds,
+          );
+          await _store.writeAccount(healed);
+          state = Ready(healed);
+          return;
+        } on Exception {
+          // Offline: the placeholder still works, names fill in next time.
+        }
+      }
       state = Ready(account);
     } else {
       // Signed in but interrupted before picking a context: refetch session.
       try {
         final session = await _fetchSession();
-        state = NeedsContext(account, session);
+        var refreshed = account;
+        if (account.userId == 0) {
+          // The stored row is the placeholder written before the first
+          // session fetch — fill in the real identity so the drawer and
+          // context picker don't show a nameless account.
+          refreshed = Account(
+            serverUrl: account.serverUrl,
+            userId: session.userId,
+            username: session.username,
+            displayName: session.friendlyName.isNotEmpty
+                ? session.friendlyName
+                : session.username,
+            groupIds: session.groupIds,
+          );
+          await _store.writeAccount(refreshed);
+        }
+        state = NeedsContext(refreshed, session);
       } on Exception {
         state = const SignedOut();
       }

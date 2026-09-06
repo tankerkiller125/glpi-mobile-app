@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_controller.dart';
+import '../../core/models/capabilities.dart';
 import '../../core/providers.dart';
 import '../../core/router/app_router.dart';
 import '../../core/sync/connectivity.dart';
@@ -28,6 +29,9 @@ class PrimaryNavDrawer extends ConsumerWidget {
     final cloud = ref.watch(cloudStateProvider);
     final status = ref.watch(syncStatusProvider).value ?? const SyncStatus();
     final location = GoRouterState.of(context).uri.path;
+    // Optional server-plugin modules only appear when the server offers them
+    // (the last-known map keeps them stable offline).
+    final caps = ref.watch(capabilitiesProvider).value ?? Capabilities.empty;
 
     return Drawer(
       child: SafeArea(
@@ -95,22 +99,60 @@ class PrimaryNavDrawer extends ConsumerWidget {
                 },
               ),
             const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-              child: Semantics(
-                header: true,
-                child: Text(
-                  'Modules',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.outline,
-                  ),
-                ),
-              ),
-            ),
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
+                  // Live-ops surfaces the companion plugins add. Grouped and
+                  // first: during an incident they are what the drawer is
+                  // opened for, and the shell itself (Assistance) is already
+                  // on screen behind the drawer. Hidden entirely on servers
+                  // that advertise none of them.
+                  if (caps.has(Cap.signal, Cap.signalAlerts) ||
+                      caps.has(Cap.major, Cap.majorView) ||
+                      caps.has(Cap.kedb, Cap.kedbSearch) ||
+                      caps.has(Cap.ai, Cap.aiAssistant) ||
+                      caps.has(Cap.change, Cap.changeCalendar)) ...[
+                    const _SectionLabel('Operations'),
+                    // First of the live-ops entries: it is the one that is
+                    // useful without already knowing which ticket you want.
+                    if (caps.has(Cap.ai, Cap.aiAssistant))
+                      _ModuleTile(
+                        icon: Icons.auto_awesome_outlined,
+                        label: l.assistantTitle,
+                        selected: location.startsWith(Routes.assistant),
+                        onTap: () => _go(context, Routes.assistant),
+                      ),
+                    if (caps.has(Cap.signal, Cap.signalAlerts))
+                      _ModuleTile(
+                        icon: Icons.notifications_active_outlined,
+                        label: l.alertsTitle,
+                        selected: location.startsWith(Routes.alerts),
+                        onTap: () => _go(context, Routes.alerts),
+                      ),
+                    if (caps.has(Cap.major, Cap.majorView))
+                      _ModuleTile(
+                        icon: Icons.warning_amber_outlined,
+                        label: l.majorTitle,
+                        selected: location.startsWith(Routes.major),
+                        onTap: () => _go(context, Routes.major),
+                      ),
+                    if (caps.has(Cap.kedb, Cap.kedbSearch))
+                      _ModuleTile(
+                        icon: Icons.report_gmailerrorred_outlined,
+                        label: l.kedbTitle,
+                        selected: location.startsWith(Routes.kedb),
+                        onTap: () => _go(context, Routes.kedb),
+                      ),
+                    if (caps.has(Cap.change, Cap.changeCalendar))
+                      _ModuleTile(
+                        icon: Icons.edit_calendar_outlined,
+                        label: l.changeCalendarTitle,
+                        selected: location.startsWith(Routes.changeCalendar),
+                        onTap: () => _go(context, Routes.changeCalendar),
+                      ),
+                  ],
+                  const _SectionLabel('Modules'),
                   _ModuleTile(
                     icon: Icons.headset_mic_outlined,
                     label: 'Assistance',
@@ -222,6 +264,30 @@ class PrimaryNavDrawer extends ConsumerWidget {
       return Text('${status.pendingCount} pending');
     }
     return null;
+  }
+}
+
+/// A small grouping label inside the drawer's scrolling module list.
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Semantics(
+        header: true,
+        child: Text(
+          text,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.outline,
+          ),
+        ),
+      ),
+    );
   }
 }
 

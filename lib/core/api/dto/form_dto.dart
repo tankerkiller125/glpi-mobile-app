@@ -28,6 +28,199 @@ class FormSummaryDto {
   );
 }
 
+/// What a catalog entry *is*, which is also what tapping it does: file a form,
+/// open a category, read an article. Anything a newer server adds arrives as
+/// [unknown] and is skipped rather than shown as a row that does nothing.
+enum ServiceCatalogItemKind {
+  form,
+  category,
+  kb,
+  unknown;
+
+  static ServiceCatalogItemKind parse(String raw) => switch (raw) {
+    'form' => ServiceCatalogItemKind.form,
+    'category' => ServiceCatalogItemKind.category,
+    'kb' => ServiceCatalogItemKind.kb,
+    _ => ServiceCatalogItemKind.unknown,
+  };
+}
+
+/// One entry in the service catalog: a form, a category, or a knowledge-base
+/// article — the three things GLPI 11 lists side by side in its own catalog.
+class ServiceCatalogItemDto {
+  const ServiceCatalogItemDto({
+    required this.kind,
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.illustration,
+    required this.pinned,
+    required this.children,
+  });
+
+  final ServiceCatalogItemKind kind;
+  final int id;
+  final String name;
+  final String description;
+
+  /// GLPI's illustration slug (`report-issue`, `request-service`, …). The app
+  /// maps it to an icon; an unknown slug degrades to a generic one.
+  final String illustration;
+
+  /// Pinned items are sorted first by the server. Kept so the app can mark
+  /// them, never to re-sort: order is the server's business.
+  final bool pinned;
+
+  /// A category's children — one level, already loaded, which is exactly what
+  /// the "expand categories" setting renders in place. Empty for leaves, and
+  /// for a nested category, which is a tile you open.
+  final List<ServiceCatalogItemDto> children;
+
+  bool get isCategory => kind == ServiceCatalogItemKind.category;
+
+  factory ServiceCatalogItemDto.fromJson(Map<String, Object?> json) =>
+      ServiceCatalogItemDto(
+        kind: ServiceCatalogItemKind.parse('${json['kind'] ?? ''}'),
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        name: '${json['name'] ?? ''}',
+        description: '${json['description'] ?? ''}',
+        illustration: '${json['illustration'] ?? ''}',
+        pinned: json['pinned'] == true,
+        children: json['children'] is List
+            ? [
+                for (final c in json['children'] as List)
+                  if (c is Map)
+                    ServiceCatalogItemDto.fromJson(c.cast<String, Object?>()),
+              ]
+            : const [],
+      );
+}
+
+/// One step of the category breadcrumb, root first, ending with the category
+/// being looked at.
+class ServiceCatalogCrumb {
+  const ServiceCatalogCrumb({required this.id, required this.name});
+
+  final int id;
+  final String name;
+
+  factory ServiceCatalogCrumb.fromJson(Map<String, Object?> json) =>
+      ServiceCatalogCrumb(
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        name: '${json['name'] ?? ''}',
+      );
+}
+
+/// One level of the service catalog, with the entity's display settings.
+///
+/// The settings travel with the level rather than being asked for separately
+/// because they are per-entity and inherited: switching entity in the app can
+/// change how the catalog is meant to look, and a cached answer from the last
+/// entity would be wrong in a way nobody would think to check.
+class ServiceCatalogPageDto {
+  const ServiceCatalogPageDto({
+    required this.expandCategories,
+    required this.sortStrategy,
+    required this.categoryId,
+    required this.ancestors,
+    required this.items,
+    required this.total,
+  });
+
+  static const empty = ServiceCatalogPageDto(
+    expandCategories: false,
+    sortStrategy: 'popularity',
+    categoryId: 0,
+    ancestors: [],
+    items: [],
+    total: 0,
+  );
+
+  /// GLPI's *Expand categories in the service catalog* entity setting: a
+  /// category is drawn as a section with its forms under it rather than as a
+  /// tile you tap into.
+  final bool expandCategories;
+
+  /// `popularity`, `alphabetical` or `reverse_alphabetical` — the entity's
+  /// default. Reported for transparency; the ordering itself is the server's,
+  /// and the app never re-sorts (pinned first, then categories, then the
+  /// strategy).
+  final String sortStrategy;
+
+  /// 0 at the root of the tree.
+  final int categoryId;
+  final List<ServiceCatalogCrumb> ancestors;
+  final List<ServiceCatalogItemDto> items;
+
+  /// How many entries this level has, which may exceed what was fetched.
+  final int total;
+
+  /// The name of the category being looked at, or empty at the root.
+  String get title => ancestors.isEmpty ? '' : ancestors.last.name;
+
+  /// Every illustration this level draws, children included — a category
+  /// rendered as a section shows its forms' artwork too, and asking for it in
+  /// the same request is the difference between a list that paints and one
+  /// that fills in.
+  List<String> get illustrationIds {
+    final ids = <String>{};
+    void walk(ServiceCatalogItemDto item) {
+      if (item.illustration.isNotEmpty) ids.add(item.illustration);
+      item.children.forEach(walk);
+    }
+
+    items.forEach(walk);
+    return ids.toList();
+  }
+
+  bool get isEmpty => items.isEmpty;
+
+  /// Built from the flat `/forms` list, for a server whose plugin predates the
+  /// catalog route: every form, no categories, nothing expanded.
+  factory ServiceCatalogPageDto.flat(List<FormSummaryDto> forms) =>
+      ServiceCatalogPageDto(
+        expandCategories: false,
+        sortStrategy: 'alphabetical',
+        categoryId: 0,
+        ancestors: const [],
+        items: [
+          for (final form in forms)
+            ServiceCatalogItemDto(
+              kind: ServiceCatalogItemKind.form,
+              id: form.id,
+              name: form.name,
+              description: form.description,
+              illustration: form.illustration,
+              pinned: false,
+              children: const [],
+            ),
+        ],
+        total: forms.length,
+      );
+
+  factory ServiceCatalogPageDto.fromJson(Map<String, Object?> json) =>
+      ServiceCatalogPageDto(
+        expandCategories: json['expand_categories'] == true,
+        sortStrategy: '${json['sort_strategy'] ?? 'popularity'}',
+        categoryId: (json['category_id'] as num?)?.toInt() ?? 0,
+        ancestors: json['ancestors'] is List
+            ? [
+                for (final a in json['ancestors'] as List)
+                  if (a is Map)
+                    ServiceCatalogCrumb.fromJson(a.cast<String, Object?>()),
+              ]
+            : const [],
+        items: json['items'] is List
+            ? [
+                for (final i in json['items'] as List)
+                  if (i is Map)
+                    ServiceCatalogItemDto.fromJson(i.cast<String, Object?>()),
+              ]
+            : const [],
+        total: (json['total'] as num?)?.toInt() ?? 0,
+      );
+}
+
 /// A selectable option for a choice/dropdown question.
 class FormOption {
   const FormOption({required this.value, required this.label});

@@ -20,6 +20,7 @@ Future<void> bookReservation(
   final comment = TextEditingController();
 
   final ok = await showModalBottomSheet<bool>(
+    useSafeArea: true,
     context: context,
     constraints: sheetConstraints(context),
     isScrollControlled: true,

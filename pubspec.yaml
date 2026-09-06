@@ -47,6 +47,11 @@ dependencies:
   vsc_quill_delta_to_html: ^1.0.5
   flutter_quill_delta_from_html: ^1.5.3
   flutter_html_table: ^3.0.0
+  # GLPI ships its service-catalog artwork as one 1.8 MB SVG sprite. The
+  # companion plugin lifts out the symbols the app is about to draw; this
+  # renders them, so the catalog looks like the portal rather than like a
+  # guess at it.
+  flutter_svg: ^2.3.0
 
 dev_dependencies:
   flutter_test:

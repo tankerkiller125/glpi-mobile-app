@@ -186,6 +186,7 @@ class _KbScreenState extends ConsumerState<KbScreen> {
 
   Future<void> _pickCategory(List<KbCategoryDto> categories) async {
     final picked = await showModalBottomSheet<int?>(
+      useSafeArea: true,
       context: context,
       constraints: sheetConstraints(context),
       isScrollControlled: true,

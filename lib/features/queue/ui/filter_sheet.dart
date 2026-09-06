@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/repositories/ticket_repository.dart';
 import '../../../core/utils/formatting.dart';
+import '../../../core/utils/layout.dart';
 import '../../../core/widgets/section_heading.dart';
 import '../queue_controls.dart';
 import '../queue_providers.dart';
@@ -13,6 +14,8 @@ class FilterSheet extends ConsumerWidget {
   const FilterSheet({super.key});
 
   static Future<void> show(BuildContext context) => showModalBottomSheet(
+    constraints: sheetConstraints(context),
+    useSafeArea: true,
     context: context,
     isScrollControlled: true,
     showDragHandle: true,

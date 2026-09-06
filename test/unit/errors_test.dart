@@ -61,6 +61,65 @@ void main() {
       expect(mapDioError(original), same(original));
     });
   });
+
+  group('hook-refused writes (server policy rejections)', () {
+    // Verbatim shape from AbstractController::getCRUDErrorResponse: a hook
+    // that vetoes an add (glpi-entitle's uncontracted-work gate) surfaces as
+    // a 500 "Failed to create item(s)" carrying the refusal in
+    // additional_messages.
+    test('carry the server\'s refusal text and skip the retry ladder', () {
+      final err = mapDioError(
+        _http(500, {
+          'status': 'ERROR',
+          'title': 'Failed to create item(s)',
+          'detail': null,
+          'additional_messages': [
+            {
+              'priority': 'error',
+              'message':
+                  'This client has no active support contract — responses '
+                  'are blocked by their uncontracted-work policy. Renew the '
+                  'contract in ERPNext to continue.',
+            },
+          ],
+        }),
+      );
+      expect(err, isA<GlpiRejectedError>());
+      expect(err.message, contains('no active support contract'));
+      expect(err.message, isNot(contains('Failed to create')));
+    });
+
+    test('multiple messages are all surfaced', () {
+      final err = mapDioError(
+        _http(500, {
+          'title': 'Failed to update item(s)',
+          'additional_messages': [
+            {'priority': 'warning', 'message': 'first'},
+            {'priority': 'error', 'message': 'second'},
+          ],
+        }),
+      );
+      expect(err, isA<GlpiRejectedError>());
+      expect(err.message, 'first\nsecond');
+    });
+
+    test('a bare 500 create failure stays a retryable server error', () {
+      expect(
+        mapDioError(
+          _http(500, {
+            'title': 'Failed to create item(s)',
+            'additional_messages': <Object?>[],
+          }),
+        ),
+        isA<GlpiServerError>(),
+      );
+      expect(
+        mapDioError(_http(500, {'title': 'Internal Server Error'})),
+        isA<GlpiServerError>(),
+      );
+      expect(mapDioError(_http(500)), isA<GlpiServerError>());
+    });
+  });
 }
 
 void _tokenChallengeTests() {

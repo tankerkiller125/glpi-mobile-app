@@ -8,6 +8,54 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **New request is the service catalog, arranged the way the instance arranged
+  it** (needs the companion plugin's `/catalog` route). Categories, one screen
+  per level so Back is the breadcrumb, and search across every category. The
+  two display decisions are the server's: GLPI's *Expand categories in the
+  service catalog* entity setting decides whether a category is a section with
+  its forms under it or a row you open, and ordering (pinned first, then
+  categories, then the entity's sort strategy) is taken as given rather than
+  re-sorted — a phone that disagrees with the portal is worse than one that
+  looks plain. Knowledge-base articles appear beside the forms, as they do on
+  the web. Against an older plugin the screen falls back to the flat list.
+- **The catalog draws GLPI's own illustrations.** They live in a single 1.8 MB
+  SVG sprite the web page references by fragment; the plugin lifts out the
+  symbols a screen is about to draw and the app caches them for the session.
+  Anything it cannot draw — an older server, an unknown id, no connection —
+  falls back to the icons the app drew before.
+- **The AI assistant, on a phone (needs glpi-ai 0.7+).** A troubleshooting
+  conversation opened from the drawer or from the ticket in front of you, with
+  the answer **streamed**: the app shows which turn is running, which tool is
+  being consulted and the words as they arrive. A tool-using run is four to
+  eight vendor round trips, and a still spinner for a minute reads as a crash —
+  on mobile it also gets the app backgrounded, which kills the request. Past
+  conversations are listed and resumable, and each answer carries the trail of
+  what the model actually looked at.
+- **glpi-ai on the ticket screen**: draft a solution (read it, then move it into
+  the reply box — the app never sends it), act on the triage suggestion field by
+  field against what the ticket says now, and **check a reply before sending**
+  it, which quotes your own words back with what it would stop a colleague
+  about. Each is capability-gated and entity-gated: the app re-asks the server
+  what it will answer in the entity you are actually working in, because that
+  gate is not a session property.
+- **Procedures from glpi-sop.** The checklists attached to a ticket, answered
+  step by step while doing the work: branch numbering, guidance, per-step notes,
+  skip-with-a-reason, and ticket-steps that raise their ticket. Deliberately not
+  offline-queued — a step marked done is a compliance claim about a moment, and
+  the server owns whether the answer was valid.
+- **Presence from glpi-presence.** Who else has this ticket open, who is typing,
+  and who has claimed the work, with claim / take over / hand back. The app
+  beats much more slowly than the web bar: a phone screen is off most of the
+  time and the server expires presence on its own TTL.
+- The assistant's failure states say what is wrong in the app's own words (a
+  dropped connection is not dio's error string) and carry a **Retry**, since the
+  conversation is kept alive across navigation and would otherwise stay in
+  whatever state it was first opened in.
+- A `decodeSse` helper for `text/event-stream` bodies, with unit tests over the
+  three framing details that are easy to get wrong and impossible to notice from
+  a passing happy path (frames end at a blank line, `data:` lines accumulate, a
+  truncated payload is dropped rather than thrown).
+
 - **An accessibility pass over the whole app.** Screen-reader semantics, contrast
   and large-text behaviour are now part of the shared widgets rather than
   per-screen afterthoughts. See [docs/accessibility.md](docs/accessibility.md).
@@ -36,6 +84,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **A bottom sheet could put its drag handle behind the status bar**, where
+  pulling down opens the notification shade instead of closing the sheet —
+  leaving no way out of a modal that owns the screen. Sheets that sized
+  themselves to a fraction of the *window* (the user and category pickers, the
+  entity switcher, the asset picker) were adding the keyboard's height on top
+  of that fraction, so with the keyboard up the sheet was taller than the
+  screen. They now size against what is actually left, every modal sheet is
+  opened with `useSafeArea: true` and a height ceiling from `sheetConstraints`,
+  and a widget test asserts the handle stays below the status bar with a
+  keyboard up.
 - The queue card showed ticket status labels for changes and problems, so a
   change's status 9 read as "Status 9" instead of "Evaluation".
 - The "PRIVATE" badge used white text in both themes; on the dark theme's light

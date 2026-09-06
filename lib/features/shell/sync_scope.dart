@@ -51,6 +51,9 @@ class _SyncScopeState extends ConsumerState<SyncScope>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) return;
     _kick();
+    // The server may have gained/lost plugin features while we were away;
+    // refetch (falls back to the cached map when offline).
+    ref.invalidate(capabilitiesProvider);
     // Renew the session while the app is in the foreground and likely to have
     // signal. Each refresh also renews the server-side lease, so a technician
     // who uses the app at all stays paired without re-scanning.

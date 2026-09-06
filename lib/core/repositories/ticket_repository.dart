@@ -119,6 +119,7 @@ class TicketRepository {
         type: row.type,
         categoryId: row.categoryId,
         categoryName: row.categoryName,
+        entityId: row.entityId,
         entityName: row.entityLabel,
         locationName: row.locationName,
         recipientName: row.recipientName,

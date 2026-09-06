@@ -204,6 +204,7 @@ class ReminderEditor extends ConsumerStatefulWidget {
 
   static Future<void> show(BuildContext context, {Reminder? existing}) =>
       showModalBottomSheet<void>(
+        useSafeArea: true,
         context: context,
         constraints: sheetConstraints(context),
         isScrollControlled: true,

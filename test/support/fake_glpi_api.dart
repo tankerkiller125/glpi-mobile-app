@@ -1,10 +1,18 @@
+import 'package:glpi_mobile/core/api/dto/ai_dto.dart';
 import 'package:glpi_mobile/core/api/dto/attachment_dto.dart';
 import 'package:glpi_mobile/core/api/dto/catalog_dto.dart';
+import 'package:glpi_mobile/core/api/dto/change_dto.dart';
 import 'package:glpi_mobile/core/api/dto/dropdown_dto.dart';
+import 'package:glpi_mobile/core/api/dto/entitle_dto.dart';
 import 'package:glpi_mobile/core/api/dto/form_dto.dart';
 import 'package:glpi_mobile/core/api/dto/itil_link_dto.dart';
+import 'package:glpi_mobile/core/api/dto/kedb_dto.dart';
+import 'package:glpi_mobile/core/api/dto/major_dto.dart';
 import 'package:glpi_mobile/core/api/dto/planning_dto.dart';
+import 'package:glpi_mobile/core/api/dto/presence_dto.dart';
 import 'package:glpi_mobile/core/api/dto/project_dto.dart';
+import 'package:glpi_mobile/core/api/dto/signal_dto.dart';
+import 'package:glpi_mobile/core/api/dto/sop_dto.dart';
 import 'package:glpi_mobile/core/api/dto/ticket_dto.dart';
 import 'package:glpi_mobile/core/api/dto/timeline_dto.dart';
 import 'package:glpi_mobile/core/api/dto/tools_dto.dart';
@@ -12,6 +20,7 @@ import 'package:glpi_mobile/core/api/dto/user_ref.dart';
 import 'package:glpi_mobile/core/api/glpi_api.dart';
 import 'package:glpi_mobile/core/api/itil_type.dart';
 import 'package:glpi_mobile/core/api/rsql.dart';
+import 'package:glpi_mobile/core/models/capabilities.dart';
 
 /// Default no-op / throwing implementations of every GlpiApi method, so a test
 /// fake can override only the ones it exercises.
@@ -411,4 +420,261 @@ mixin FakeGlpiApiDefaults implements GlpiApi {
     required String targetItemtype,
     required int targetId,
   }) async {}
+
+  // --- Capabilities ---
+
+  @override
+  Future<Capabilities> fetchCapabilities() async => Capabilities.empty;
+
+  // --- Alerts + on-call (glpi-signal) ---
+
+  @override
+  Future<List<AlertDto>> listAlerts({
+    String state = 'open,acked',
+    String? severity,
+    int start = 0,
+    int limit = 50,
+  }) async => const [];
+
+  @override
+  Future<AlertDetailDto> getAlert(int id) => throw UnimplementedError();
+
+  @override
+  Future<AlertDto> ackAlert(int id) => throw UnimplementedError();
+
+  @override
+  Future<AlertDto> closeAlert(int id) => throw UnimplementedError();
+
+  @override
+  Future<List<OncallRotaDto>> listOncallRotas() async => const [];
+
+  // --- Major incidents (glpi-major) ---
+
+  @override
+  Future<List<MajorIncidentDto>> listMajorIncidents({
+    String state = 'open',
+  }) async => const [];
+
+  @override
+  Future<MajorIncidentDetailDto> getMajorIncident(int id) =>
+      throw UnimplementedError();
+
+  @override
+  Future<MajorTicketInfoDto> getMajorForTicket(int ticketsId) async =>
+      MajorTicketInfoDto.none;
+
+  @override
+  Future<MajorIncidentDto> declareMajorIncident({
+    required int ticketsId,
+    required String title,
+    required int commanderId,
+    int commsId = 0,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<void> attachTicketToMajor(int incidentId, int ticketsId) async {}
+
+  @override
+  Future<void> postMajorUpdate(
+    int incidentId, {
+    required String audience,
+    required String content,
+  }) async {}
+
+  @override
+  Future<void> patchMajorIncident(
+    int incidentId,
+    Map<String, Object?> fields,
+  ) async {}
+
+  // --- Known errors (glpi-kedb) ---
+
+  @override
+  Future<List<KedbMatchDto>> kedbMatchesForTicket(int ticketsId) async =>
+      const [];
+
+  @override
+  Future<KedbHitResultDto> kedbRecordHit({
+    required int keId,
+    required int ticketsId,
+    required String action,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<List<KedbRowDto>> searchKnownErrors({
+    String query = '',
+    int start = 0,
+    int limit = 50,
+  }) async => const [];
+
+  @override
+  Future<KedbDetailDto> getKnownError(int id) => throw UnimplementedError();
+
+  // --- Entitlement (glpi-entitle) ---
+
+  @override
+  Future<EntitlementDto> getEntitlement(int entitiesId) async =>
+      const EntitlementDto(
+        state: EntitlementDto.silent,
+        ageSeconds: 0,
+        error: null,
+        payload: null,
+      );
+
+  // --- Change calendar (glpi-change) ---
+
+  @override
+  Future<List<ChangeCalendarEventDto>> fetchChangeCalendar({
+    required String from,
+    required String to,
+  }) async => const [];
+
+  @override
+  Future<ChangeScheduleDto> getChangeSchedule(int changeId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<List<FreezeDto>> listActiveFreezes() async => const [];
+
+  @override
+  Future<Map<String, String>> fetchIllustrations(List<String> ids) async =>
+      const {};
+
+  @override
+  Future<ServiceCatalogPageDto> fetchServiceCatalog({
+    int category = 0,
+    String filter = '',
+    int perPage = 100,
+  }) async => ServiceCatalogPageDto.empty;
+
+  // --- AI (glpi-ai) ---
+
+  @override
+  Future<AiStatusDto> getAiStatus() async => AiStatusDto.off;
+
+  @override
+  Future<List<AiThreadDto>> listAiThreads() async => const [];
+
+  @override
+  Future<AiThreadDetailDto> openAiThread({String? itemtype, int? itemsId}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<AiThreadDetailDto> getAiThread(int threadId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<AiAnswerDto> askAi(int threadId, String question) =>
+      throw UnimplementedError();
+
+  @override
+  Stream<AiStreamEvent> streamAiAnswer(int threadId, String question) =>
+      const Stream.empty();
+
+  @override
+  Future<void> clearAiThread(int threadId) async {}
+
+  @override
+  Future<AiDraftStateDto> getAiDraft(
+    int ticketsId, {
+    String kind = 'solution',
+  }) async => AiDraftStateDto.unavailable;
+
+  @override
+  Future<AiDraftStateDto> makeAiDraft(
+    int ticketsId, {
+    String kind = 'solution',
+  }) => throw UnimplementedError();
+
+  @override
+  Future<void> decideAiDraft(int draftId, String decision) async {}
+
+  @override
+  Future<AiTriageStateDto> getAiTriage(int ticketsId) async =>
+      AiTriageStateDto.none;
+
+  @override
+  Future<AiTriageStateDto> runAiTriage(int ticketsId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<AiTriageStateDto> decideAiTriage(
+    int suggestionId,
+    String decision,
+    String field,
+  ) => throw UnimplementedError();
+
+  @override
+  Future<ReplyReviewDto> reviewReply({
+    required String itemtype,
+    required int itemsId,
+    required String text,
+  }) => throw UnimplementedError();
+
+  // --- Procedures (glpi-sop) ---
+
+  @override
+  Future<List<SopRunDto>> listSopRuns(String itemtype, int itemsId) async =>
+      const [];
+
+  @override
+  Future<SopRunDetailDto> getSopRun(int runId) => throw UnimplementedError();
+
+  @override
+  Future<SopRunDetailDto> answerSopStep(
+    int runId,
+    int stepId, {
+    Object? value,
+    String? valueItemtype,
+    int? valueItemsId,
+    int? documentsId,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<SopRunDetailDto> clearSopStep(int runId, int stepId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<SopRunDetailDto> skipSopStep(int runId, int stepId, String reason) =>
+      throw UnimplementedError();
+
+  @override
+  Future<SopRunDetailDto> noteSopStep(int runId, int stepId, String note) =>
+      throw UnimplementedError();
+
+  @override
+  Future<SopRunDetailDto> spawnSopStep(int runId, int stepId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<List<SopLogEntryDto>> getSopRunLog(int runId) async => const [];
+
+  // --- Presence (glpi-presence) ---
+
+  @override
+  Future<PresenceStateDto> getPresence(String itemtype, int itemsId) async =>
+      PresenceStateDto.empty;
+
+  @override
+  Future<PresenceStateDto> presenceHeartbeat(
+    String itemtype,
+    int itemsId, {
+    required String sessionKey,
+    bool typing = false,
+    String? typingKind,
+  }) async => PresenceStateDto.empty;
+
+  @override
+  Future<void> presenceLeave(
+    String itemtype,
+    int itemsId, {
+    required String sessionKey,
+  }) async {}
+
+  @override
+  Future<PresenceStateDto> presenceClaim(
+    String itemtype,
+    int itemsId, {
+    required String action,
+  }) => throw UnimplementedError();
 }

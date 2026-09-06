@@ -77,6 +77,37 @@ void main() {
     );
   });
 
+  testWidgets('with no rail the panes are the two halves', (tester) async {
+    // A phone in landscape: expanded by width so it has two panes, compact by
+    // height so navigation is a bar rather than a rail. TwoPane therefore
+    // starts at the window's left edge with nothing offsetting it, and the
+    // split still has to land on the fold rather than at startWidth.
+    tester.view.physicalSize = const Size(1000, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      _window(
+        railWidth: 0,
+        features: const [
+          DisplayFeature(
+            bounds: Rect.fromLTRB(490, 0, 510, 800),
+            type: DisplayFeatureType.hinge,
+            state: DisplayFeatureState.postureHalfOpened,
+          ),
+        ],
+        child: const TwoPane(start: Text('list'), end: Text('detail')),
+      ),
+    );
+
+    expect(tester.getTopLeft(find.text('list')).dx, 0);
+    expect(tester.getTopRight(find.text('list')).dx, lessThanOrEqualTo(490));
+    expect(
+      tester.getTopLeft(find.text('detail')).dx,
+      greaterThanOrEqualTo(510),
+    );
+  });
+
   testWidgets('renders with an empty pane and a hinge', (tester) async {
     // Regression: computing the hinge offset via findRenderObject() inside
     // LayoutBuilder threw before layout, which release builds paint as a bare

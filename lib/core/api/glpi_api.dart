@@ -1,12 +1,23 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
+import '../models/capabilities.dart';
+import 'dto/ai_dto.dart';
 import 'dto/attachment_dto.dart';
 import 'dto/catalog_dto.dart';
+import 'dto/change_dto.dart';
 import 'dto/dropdown_dto.dart';
+import 'dto/entitle_dto.dart';
 import 'dto/form_dto.dart';
 import 'dto/itil_link_dto.dart';
+import 'dto/kedb_dto.dart';
+import 'dto/major_dto.dart';
 import 'dto/planning_dto.dart';
+import 'dto/presence_dto.dart';
 import 'dto/project_dto.dart';
+import 'dto/signal_dto.dart';
+import 'dto/sop_dto.dart';
 import 'dto/ticket_dto.dart';
 import 'dto/timeline_dto.dart';
 import 'dto/tools_dto.dart';
@@ -14,6 +25,7 @@ import 'dto/user_ref.dart';
 import 'errors.dart';
 import 'itil_type.dart';
 import 'rsql.dart';
+import 'sse.dart';
 
 /// A page of results plus the total count parsed from `Content-Range`.
 class Page<T> {
@@ -238,8 +250,23 @@ abstract class GlpiApi {
 
   // --- Service catalog (forms) ---
 
-  /// Forms this user may answer.
+  /// Forms this user may answer, flat. Kept for servers whose companion
+  /// plugin predates [fetchServiceCatalog].
   Future<List<FormSummaryDto>> listForms();
+
+  /// GLPI's own catalog artwork for [ids], as standalone SVG markup keyed by
+  /// id. Ids the server cannot draw are simply absent from the map.
+  Future<Map<String, String>> fetchIllustrations(List<String> ids);
+
+  /// One level of GLPI's service catalog: the categories and forms at
+  /// [category] (0 = root), with the entity's own display settings — including
+  /// whether categories are expanded into sections. A non-empty [filter]
+  /// searches across every category, as the web catalog does.
+  Future<ServiceCatalogPageDto> fetchServiceCatalog({
+    int category = 0,
+    String filter = '',
+    int perPage = 100,
+  });
 
   /// A form's full definition (sections, questions, resolved options).
   Future<FormDefinitionDto> getForm(int formId);
@@ -377,6 +404,241 @@ abstract class GlpiApi {
     required String role,
     required int memberId,
     String itemtype = itilTicket,
+  });
+
+  // --- Optional-feature capabilities (companion plugins) ---
+
+  /// What the server's companion plugins can do (`/GlpiMobile/capabilities`).
+  /// Callers treat a 404 (older server plugin) or any failure as
+  /// [Capabilities.empty] — the method itself throws like every other call.
+  Future<Capabilities> fetchCapabilities();
+
+  // --- Alerts + on-call (glpi-signal plugin) ---
+
+  /// Alerts, newest first. [state] is a comma-list (`open,acked`);
+  /// [severity] filters to one severity when set.
+  Future<List<AlertDto>> listAlerts({
+    String state = 'open,acked',
+    String? severity,
+    int start = 0,
+    int limit = 50,
+  });
+
+  /// One alert with its page log.
+  Future<AlertDetailDto> getAlert(int id);
+
+  /// Acknowledge an alert; returns the updated row.
+  Future<AlertDto> ackAlert(int id);
+
+  /// Close an alert; returns the updated row.
+  Future<AlertDto> closeAlert(int id);
+
+  /// Every on-call rota visible to this user.
+  Future<List<OncallRotaDto>> listOncallRotas();
+
+  // --- Major incidents (glpi-major plugin) ---
+
+  Future<List<MajorIncidentDto>> listMajorIncidents({String state = 'open'});
+
+  /// One incident with its comms log.
+  Future<MajorIncidentDetailDto> getMajorIncident(int id);
+
+  /// A ticket's major-incident binding + the open incidents it could attach to.
+  Future<MajorTicketInfoDto> getMajorForTicket(int ticketsId);
+
+  /// Declare a major incident on a ticket; returns the created incident.
+  Future<MajorIncidentDto> declareMajorIncident({
+    required int ticketsId,
+    required String title,
+    required int commanderId,
+    int commsId = 0,
+  });
+
+  /// Attach a ticket to an existing incident.
+  Future<void> attachTicketToMajor(int incidentId, int ticketsId);
+
+  /// Post a comms update. [audience] is `internal` or `customer`.
+  Future<void> postMajorUpdate(
+    int incidentId, {
+    required String audience,
+    required String content,
+  });
+
+  /// Update incident fields (`state`, `next_update_at`, `title`).
+  Future<void> patchMajorIncident(int incidentId, Map<String, Object?> fields);
+
+  // --- Known errors (glpi-kedb plugin) ---
+
+  /// The KE offers for a ticket. The server records a `shown` hit per
+  /// returned match, so call this once per ticket view, not per rebuild.
+  Future<List<KedbMatchDto>> kedbMatchesForTicket(int ticketsId);
+
+  /// Record a `used` / `dismissed` hit. `used` also returns the followup
+  /// snippet the technician can paste into a reply.
+  Future<KedbHitResultDto> kedbRecordHit({
+    required int keId,
+    required int ticketsId,
+    required String action,
+  });
+
+  /// Entity-scoped KE search over title and symptom.
+  Future<List<KedbRowDto>> searchKnownErrors({
+    String query = '',
+    int start = 0,
+    int limit = 50,
+  });
+
+  /// One KE in full: symptom, workaround, root cause, lifecycle, links.
+  Future<KedbDetailDto> getKnownError(int id);
+
+  // --- Entitlement (glpi-entitle plugin) ---
+
+  /// The entitlement answer for an entity — the `{state, payload, age,
+  /// error}` envelope, same cache and degrade rules as the web Billing tab.
+  Future<EntitlementDto> getEntitlement(int entitiesId);
+
+  // --- Change calendar (glpi-change plugin) ---
+
+  /// The combined change/release/freeze feed. Both bounds are required ISO
+  /// dates and the span must stay within 92 days.
+  Future<List<ChangeCalendarEventDto>> fetchChangeCalendar({
+    required String from,
+    required String to,
+  });
+
+  /// One change's scheduling picture: window, warnings, crossed freezes.
+  Future<ChangeScheduleDto> getChangeSchedule(int changeId);
+
+  /// The freezes in force between now and now + 14 days.
+  Future<List<FreezeDto>> listActiveFreezes();
+
+  // --- AI (glpi-ai plugin) ---
+
+  /// What the AI plugin will answer for this caller in the entity the request
+  /// is made in. Asked per screen rather than per session: the capability map
+  /// cannot know which entity the technician has switched to.
+  Future<AiStatusDto> getAiStatus();
+
+  /// This technician's recent conversations, newest first.
+  Future<List<AiThreadDto>> listAiThreads();
+
+  /// Open or resume the conversation for a context — a ticket, an asset, or
+  /// nothing at all for the general one.
+  Future<AiThreadDetailDto> openAiThread({String? itemtype, int? itemsId});
+
+  /// One conversation with its transcript.
+  Future<AiThreadDetailDto> getAiThread(int threadId);
+
+  /// Ask, and wait for the finished answer. The fallback for when streaming is
+  /// not available; [streamAiAnswer] is what the assistant screen uses.
+  Future<AiAnswerDto> askAi(int threadId, String question);
+
+  /// Ask, and watch the run happen: turns, tools, and the answer as it
+  /// arrives. The stream ends after `done` or `failed`; cancelling the
+  /// subscription abandons the connection, which the server notices and stops.
+  Stream<AiStreamEvent> streamAiAnswer(int threadId, String question);
+
+  /// Forget a conversation's transcript.
+  Future<void> clearAiThread(int threadId);
+
+  /// The drafted solution (or article) a ticket already has.
+  Future<AiDraftStateDto> getAiDraft(int ticketsId, {String kind = 'solution'});
+
+  /// Draft one now. Synchronous at the server, so this waits on a provider.
+  Future<AiDraftStateDto> makeAiDraft(
+    int ticketsId, {
+    String kind = 'solution',
+  });
+
+  /// Record what became of a draft: `used` or `discard`. Bookkeeping, and the
+  /// entire measurement of whether the feature is any good.
+  Future<void> decideAiDraft(int draftId, String decision);
+
+  /// The triage suggestion for a ticket.
+  Future<AiTriageStateDto> getAiTriage(int ticketsId);
+
+  /// Run triage now (costs a provider call, so it needs update rights).
+  Future<AiTriageStateDto> runAiTriage(int ticketsId);
+
+  /// Apply or dismiss one proposed field.
+  Future<AiTriageStateDto> decideAiTriage(
+    int suggestionId,
+    String decision,
+    String field,
+  );
+
+  /// Read a drafted reply before it is sent. Writes nothing.
+  Future<ReplyReviewDto> reviewReply({
+    required String itemtype,
+    required int itemsId,
+    required String text,
+  });
+
+  // --- Procedures (glpi-sop plugin) ---
+
+  /// The procedures attached to one ITIL object.
+  Future<List<SopRunDto>> listSopRuns(String itemtype, int itemsId);
+
+  /// One run, with its steps and what has been answered.
+  Future<SopRunDetailDto> getSopRun(int runId);
+
+  /// Answer a step. [value] is the typed value; assets and documents send
+  /// their references instead.
+  Future<SopRunDetailDto> answerSopStep(
+    int runId,
+    int stepId, {
+    Object? value,
+    String? valueItemtype,
+    int? valueItemsId,
+    int? documentsId,
+  });
+
+  /// Un-answer a step.
+  Future<SopRunDetailDto> clearSopStep(int runId, int stepId);
+
+  /// Skip a step (or un-skip it, if it was already skipped).
+  Future<SopRunDetailDto> skipSopStep(int runId, int stepId, String reason);
+
+  /// Write or erase the note on a step.
+  Future<SopRunDetailDto> noteSopStep(int runId, int stepId, String note);
+
+  /// Raise the ticket a ticket-step asks for. Refused (409) when one has
+  /// already been raised — a duplicate request costs somebody real work.
+  Future<SopRunDetailDto> spawnSopStep(int runId, int stepId);
+
+  /// The run's history.
+  Future<List<SopLogEntryDto>> getSopRunLog(int runId);
+
+  // --- Presence (glpi-presence plugin) ---
+
+  /// Who is on this item, and who holds the claim. A read: it does not
+  /// announce the caller.
+  Future<PresenceStateDto> getPresence(String itemtype, int itemsId);
+
+  /// "I am here", and optionally "I am typing". [sessionKey] identifies this
+  /// device's participation and must be stable while the screen is open.
+  Future<PresenceStateDto> presenceHeartbeat(
+    String itemtype,
+    int itemsId, {
+    required String sessionKey,
+    bool typing = false,
+    String? typingKind,
+  });
+
+  /// Stop being here. Worth calling, never worth waiting for — the server's
+  /// TTL covers a phone that simply vanishes.
+  Future<void> presenceLeave(
+    String itemtype,
+    int itemsId, {
+    required String sessionKey,
+  });
+
+  /// Claim the work, take it over, or hand it back. `claim` on an item
+  /// somebody else holds fails rather than stealing it.
+  Future<PresenceStateDto> presenceClaim(
+    String itemtype,
+    int itemsId, {
+    required String action,
   });
 
   // --- Push notifications (companion plugin) ---
@@ -1090,6 +1352,54 @@ class HlGlpiApi implements GlpiApi {
   }
 
   @override
+  Future<ServiceCatalogPageDto> fetchServiceCatalog({
+    int category = 0,
+    String filter = '',
+    int perPage = 100,
+  }) async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiMobile/catalog',
+        queryParameters: {
+          'category': category,
+          if (filter.isNotEmpty) 'filter': filter,
+          'per_page': perPage,
+        },
+      );
+      return ServiceCatalogPageDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      final mapped = mapDioError(e);
+      // A companion plugin from before the catalog route. Fall back to the
+      // flat list rather than showing nothing: an un-categorised catalog is
+      // what that server has always served, and it still files tickets.
+      if (mapped is GlpiNotFoundError) {
+        return ServiceCatalogPageDto.flat(await listForms());
+      }
+      throw mapped;
+    }
+  }
+
+  @override
+  Future<Map<String, String>> fetchIllustrations(List<String> ids) async {
+    if (ids.isEmpty) return const {};
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiMobile/illustrations',
+        queryParameters: {'ids': ids.join(',')},
+      );
+      return {
+        for (final entry in (response.data ?? const {}).entries)
+          if (entry.value is String) entry.key: entry.value! as String,
+      };
+    } on DioException {
+      // Artwork is decoration: a server too old to have the route, or one that
+      // could not be reached, costs the catalog its illustrations and nothing
+      // else. The icons the app draws instead were the whole story until now.
+      return const {};
+    }
+  }
+
+  @override
   Future<FormDefinitionDto> getForm(int formId) async {
     try {
       final response = await _dio.get<Map<String, Object?>>(
@@ -1296,6 +1606,704 @@ class HlGlpiApi implements GlpiApi {
         '/Assistance/$itemtype/$ticketId/TeamMember',
         data: {'type': type, 'role': role, 'id': memberId},
       );
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<Capabilities> fetchCapabilities() async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiMobile/capabilities',
+      );
+      return Capabilities.fromJson(response.data);
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<List<AlertDto>> listAlerts({
+    String state = 'open,acked',
+    String? severity,
+    int start = 0,
+    int limit = 50,
+  }) async {
+    try {
+      // The plugin wraps the rows in `{total, start, limit, <rows>: [...]}`;
+      // the DTO layer digs the list out tolerantly (and accepts a bare array).
+      final response = await _dio.get<Object?>(
+        '/GlpiSignal/alerts',
+        queryParameters: {
+          'state': state,
+          'severity': ?severity,
+          'start': start,
+          'limit': limit,
+        },
+      );
+      return alertRowsFromJson(response.data).map(AlertDto.fromJson).toList();
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<AlertDetailDto> getAlert(int id) async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiSignal/alerts/$id',
+      );
+      return AlertDetailDto.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<AlertDto> ackAlert(int id) => _alertAction(id, 'ack');
+
+  @override
+  Future<AlertDto> closeAlert(int id) => _alertAction(id, 'close');
+
+  Future<AlertDto> _alertAction(int id, String action) async {
+    try {
+      final response = await _dio.post<Map<String, Object?>>(
+        '/GlpiSignal/alerts/$id/$action',
+      );
+      return AlertDto.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<List<OncallRotaDto>> listOncallRotas() async {
+    try {
+      // The live route wraps the rows: `{"rotas": [...]}`.
+      final response = await _dio.get<Object?>('/GlpiSignal/oncall');
+      return oncallRowsFromJson(
+        response.data,
+      ).map(OncallRotaDto.fromJson).toList();
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<List<MajorIncidentDto>> listMajorIncidents({
+    String state = 'open',
+  }) async {
+    try {
+      // The live route wraps the rows: `{"incidents": [...]}`.
+      final response = await _dio.get<Object?>(
+        '/GlpiMajor/incidents',
+        queryParameters: {'state': state},
+      );
+      return majorRowsFromJson(
+        response.data,
+      ).map(MajorIncidentDto.fromJson).toList();
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<MajorIncidentDetailDto> getMajorIncident(int id) async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiMajor/incidents/$id',
+      );
+      return MajorIncidentDetailDto.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<MajorTicketInfoDto> getMajorForTicket(int ticketsId) async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiMajor/ticket/$ticketsId',
+      );
+      return MajorTicketInfoDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<MajorIncidentDto> declareMajorIncident({
+    required int ticketsId,
+    required String title,
+    required int commanderId,
+    int commsId = 0,
+  }) async {
+    try {
+      // `commander` and `comms` are user ids — the server casts them to int.
+      final response = await _dio.post<Map<String, Object?>>(
+        '/GlpiMajor/incidents',
+        data: {
+          'tickets_id': ticketsId,
+          'title': title,
+          'commander': commanderId,
+          'comms': commsId,
+        },
+      );
+      return MajorIncidentDto.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<void> attachTicketToMajor(int incidentId, int ticketsId) async {
+    try {
+      await _dio.post<Object?>(
+        '/GlpiMajor/incidents/$incidentId/tickets',
+        data: {'tickets_id': ticketsId},
+      );
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<void> postMajorUpdate(
+    int incidentId, {
+    required String audience,
+    required String content,
+  }) async {
+    try {
+      await _dio.post<Object?>(
+        '/GlpiMajor/incidents/$incidentId/updates',
+        data: {'audience': audience, 'content': content},
+      );
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<void> patchMajorIncident(
+    int incidentId,
+    Map<String, Object?> fields,
+  ) => _patch('/GlpiMajor/incidents/$incidentId', fields);
+
+  @override
+  Future<List<KedbMatchDto>> kedbMatchesForTicket(int ticketsId) async {
+    try {
+      final response = await _dio.get<List<Object?>>(
+        '/GlpiKedb/match/ticket/$ticketsId',
+      );
+      return (response.data ?? const [])
+          .whereType<Map<String, Object?>>()
+          .map(KedbMatchDto.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<KedbHitResultDto> kedbRecordHit({
+    required int keId,
+    required int ticketsId,
+    required String action,
+  }) async {
+    try {
+      final response = await _dio.post<Object?>(
+        '/GlpiKedb/hits',
+        data: {'ke_id': keId, 'tickets_id': ticketsId, 'action': action},
+      );
+      return KedbHitResultDto.fromJson(response.data);
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<List<KedbRowDto>> searchKnownErrors({
+    String query = '',
+    int start = 0,
+    int limit = 50,
+  }) async {
+    try {
+      // Wrapped in `{total, start, limit, rows}`; the DTO layer digs the
+      // list out tolerantly (and accepts a bare array).
+      final response = await _dio.get<Object?>(
+        '/GlpiKedb/knownerrors',
+        queryParameters: {
+          if (query.trim().isNotEmpty) 'q': query.trim(),
+          'start': start,
+          'limit': limit,
+        },
+      );
+      return kedbRowsFromJson(response.data).map(KedbRowDto.fromJson).toList();
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<KedbDetailDto> getKnownError(int id) async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiKedb/knownerrors/$id',
+      );
+      return KedbDetailDto.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<EntitlementDto> getEntitlement(int entitiesId) async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiEntitle/entitlement/$entitiesId',
+      );
+      return EntitlementDto.fromJson(response.data);
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<List<ChangeCalendarEventDto>> fetchChangeCalendar({
+    required String from,
+    required String to,
+  }) async {
+    try {
+      final response = await _dio.get<List<Object?>>(
+        '/GlpiChange/calendar',
+        queryParameters: {'from': from, 'to': to},
+      );
+      return (response.data ?? const [])
+          .whereType<Map<String, Object?>>()
+          .map(ChangeCalendarEventDto.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<ChangeScheduleDto> getChangeSchedule(int changeId) async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiChange/changes/$changeId/schedule',
+      );
+      return ChangeScheduleDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<List<FreezeDto>> listActiveFreezes() async {
+    try {
+      final response = await _dio.get<List<Object?>>(
+        '/GlpiChange/freezes/active',
+      );
+      return (response.data ?? const [])
+          .whereType<Map<String, Object?>>()
+          .map(FreezeDto.fromJson)
+          .toList();
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<AiStatusDto> getAiStatus() async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>('/GlpiAi/status');
+      return AiStatusDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<List<AiThreadDto>> listAiThreads() async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>('/GlpiAi/threads');
+      final rows = response.data?['threads'];
+      return rows is List
+          ? [
+              for (final r in rows)
+                if (r is Map) AiThreadDto.fromJson(r.cast<String, Object?>()),
+            ]
+          : const [];
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<AiThreadDetailDto> openAiThread({
+    String? itemtype,
+    int? itemsId,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, Object?>>(
+        '/GlpiAi/threads',
+        // Both omitted opens the general conversation. Sending an item the
+        // server cannot resolve is not an error there either — it degrades to
+        // no context, exactly as the web panel does.
+        data: {'itemtype': ?itemtype, 'items_id': ?itemsId},
+      );
+      return AiThreadDetailDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<AiThreadDetailDto> getAiThread(int threadId) async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiAi/threads/$threadId',
+      );
+      return AiThreadDetailDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<AiAnswerDto> askAi(int threadId, String question) async {
+    try {
+      final response = await _dio.post<Map<String, Object?>>(
+        '/GlpiAi/threads/$threadId/ask',
+        data: {'question': question},
+        // An agent run is four to eight vendor round trips. The default
+        // 30-second receive timeout cancels most of them halfway.
+        options: Options(receiveTimeout: const Duration(minutes: 5)),
+      );
+      return AiAnswerDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Stream<AiStreamEvent> streamAiAnswer(int threadId, String question) async* {
+    final Response<ResponseBody> response;
+    try {
+      response = await _dio.post<ResponseBody>(
+        '/GlpiAi/threads/$threadId/stream',
+        data: {'question': question},
+        options: Options(
+          responseType: ResponseType.stream,
+          // The gap between events, not the length of the run: the server
+          // narrates every turn and every tool, so a minute of silence really
+          // does mean the connection is dead.
+          receiveTimeout: const Duration(minutes: 2),
+          headers: {'Accept': 'text/event-stream'},
+        ),
+      );
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+
+    final body = response.data;
+    if (body == null) return;
+
+    final frames = decodeSse(
+      utf8.decoder
+          .bind(body.stream.cast<List<int>>())
+          .transform(const LineSplitter()),
+    );
+
+    try {
+      await for (final frame in frames) {
+        final event = AiStreamEvent(
+          kind: AiEventKind.parse(frame.event),
+          data: frame.data,
+        );
+        yield event;
+        // `done` and `failed` are both terminal — the server closes after
+        // either, and waiting for the close costs a dead connection's timeout.
+        if (event.kind == AiEventKind.done ||
+            event.kind == AiEventKind.failed) {
+          return;
+        }
+      }
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<void> clearAiThread(int threadId) =>
+      _delete('/GlpiAi/threads/$threadId');
+
+  @override
+  Future<AiDraftStateDto> getAiDraft(
+    int ticketsId, {
+    String kind = 'solution',
+  }) async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiAi/tickets/$ticketsId/draft',
+        queryParameters: {'kind': kind},
+      );
+      return AiDraftStateDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<AiDraftStateDto> makeAiDraft(
+    int ticketsId, {
+    String kind = 'solution',
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, Object?>>(
+        '/GlpiAi/tickets/$ticketsId/draft',
+        data: {'kind': kind},
+        options: Options(receiveTimeout: const Duration(minutes: 3)),
+      );
+      return AiDraftStateDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<void> decideAiDraft(int draftId, String decision) async {
+    try {
+      await _dio.post<Object?>('/GlpiAi/drafts/$draftId/$decision');
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<AiTriageStateDto> getAiTriage(int ticketsId) async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiAi/tickets/$ticketsId/triage',
+      );
+      return AiTriageStateDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<AiTriageStateDto> runAiTriage(int ticketsId) async {
+    try {
+      final response = await _dio.post<Map<String, Object?>>(
+        '/GlpiAi/tickets/$ticketsId/triage',
+        options: Options(receiveTimeout: const Duration(minutes: 3)),
+      );
+      return AiTriageStateDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<AiTriageStateDto> decideAiTriage(
+    int suggestionId,
+    String decision,
+    String field,
+  ) async {
+    try {
+      final response = await _dio.post<Map<String, Object?>>(
+        '/GlpiAi/triage/$suggestionId/$decision',
+        data: {'field': field},
+      );
+      return AiTriageStateDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<ReplyReviewDto> reviewReply({
+    required String itemtype,
+    required int itemsId,
+    required String text,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, Object?>>(
+        '/GlpiAi/reply/review',
+        data: {'itemtype': itemtype, 'items_id': itemsId, 'text': text},
+        options: Options(receiveTimeout: const Duration(minutes: 2)),
+      );
+      return ReplyReviewDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<List<SopRunDto>> listSopRuns(String itemtype, int itemsId) async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiSop/item/$itemtype/$itemsId/runs',
+      );
+      final rows = response.data?['runs'];
+      return rows is List
+          ? [
+              for (final r in rows)
+                if (r is Map) SopRunDto.fromJson(r.cast<String, Object?>()),
+            ]
+          : const [];
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<SopRunDetailDto> getSopRun(int runId) async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiSop/runs/$runId',
+      );
+      return SopRunDetailDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<SopRunDetailDto> answerSopStep(
+    int runId,
+    int stepId, {
+    Object? value,
+    String? valueItemtype,
+    int? valueItemsId,
+    int? documentsId,
+  }) => _sopStep(runId, stepId, 'answer', {
+    'value': ?value,
+    'value_itemtype': ?valueItemtype,
+    'value_items_id': ?valueItemsId,
+    'documents_id': ?documentsId,
+  });
+
+  @override
+  Future<SopRunDetailDto> clearSopStep(int runId, int stepId) =>
+      _sopStep(runId, stepId, 'clear', const {});
+
+  @override
+  Future<SopRunDetailDto> skipSopStep(int runId, int stepId, String reason) =>
+      _sopStep(runId, stepId, 'skip', {'reason': reason});
+
+  @override
+  Future<SopRunDetailDto> noteSopStep(int runId, int stepId, String note) =>
+      _sopStep(runId, stepId, 'note', {'note': note});
+
+  /// Every step write answers with the whole run, recomputed — which is the
+  /// point: one answer can open a branch, close another, and change the
+  /// counters, and none of that is derivable on the client.
+  Future<SopRunDetailDto> _sopStep(
+    int runId,
+    int stepId,
+    String action,
+    Map<String, Object?> body,
+  ) async {
+    try {
+      final response = await _dio.post<Map<String, Object?>>(
+        '/GlpiSop/runs/$runId/steps/$stepId/$action',
+        data: body,
+      );
+      return SopRunDetailDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<SopRunDetailDto> spawnSopStep(int runId, int stepId) =>
+      _sopStep(runId, stepId, 'spawn', const {});
+
+  @override
+  Future<List<SopLogEntryDto>> getSopRunLog(int runId) async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiSop/runs/$runId/log',
+      );
+      final rows = response.data?['entries'];
+      return rows is List
+          ? [
+              for (final r in rows)
+                if (r is Map)
+                  SopLogEntryDto.fromJson(r.cast<String, Object?>()),
+            ]
+          : const [];
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<PresenceStateDto> getPresence(String itemtype, int itemsId) async {
+    try {
+      final response = await _dio.get<Map<String, Object?>>(
+        '/GlpiPresence/item/$itemtype/$itemsId',
+      );
+      return PresenceStateDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<PresenceStateDto> presenceHeartbeat(
+    String itemtype,
+    int itemsId, {
+    required String sessionKey,
+    bool typing = false,
+    String? typingKind,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, Object?>>(
+        '/GlpiPresence/item/$itemtype/$itemsId/heartbeat',
+        data: {
+          'session_key': sessionKey,
+          'typing': typing,
+          'typing_kind': ?typingKind,
+        },
+      );
+      return PresenceStateDto.fromJson(response.data ?? const {});
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<void> presenceLeave(
+    String itemtype,
+    int itemsId, {
+    required String sessionKey,
+  }) async {
+    try {
+      await _dio.post<Object?>(
+        '/GlpiPresence/item/$itemtype/$itemsId/leave',
+        data: {'session_key': sessionKey},
+      );
+    } on DioException catch (e) {
+      throw mapDioError(e);
+    }
+  }
+
+  @override
+  Future<PresenceStateDto> presenceClaim(
+    String itemtype,
+    int itemsId, {
+    required String action,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, Object?>>(
+        '/GlpiPresence/item/$itemtype/$itemsId/$action',
+      );
+      return PresenceStateDto.fromJson(response.data ?? const {});
     } on DioException catch (e) {
       throw mapDioError(e);
     }

@@ -14,6 +14,11 @@ class CategoryPicker extends ConsumerStatefulWidget {
 
   static Future<(int, String)?> show(BuildContext context, int? current) =>
       showModalBottomSheet<(int, String)>(
+        useSafeArea: true,
+        // Root navigator: from the embedded two-pane detail the nearest
+        // navigator is the shell branch, whose barrier misses the rail,
+        // bottom bar, and shell FAB (they overlap the sheet on a foldable).
+        useRootNavigator: true,
         context: context,
         constraints: sheetConstraints(context),
         showDragHandle: true,
@@ -52,7 +57,9 @@ class _CategoryPickerState extends ConsumerState<CategoryPicker> {
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
         child: SizedBox(
-          height: MediaQuery.of(context).size.height * 0.6,
+          // See UserPicker: a fraction of the window plus the keyboard's own
+          // height is taller than the window.
+          height: sheetContentHeight(context),
           child: Column(
             children: [
               Padding(

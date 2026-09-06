@@ -8,6 +8,7 @@ import 'api/dto/dropdown_dto.dart';
 import 'api/dto/form_dto.dart';
 import 'api/dto/tools_dto.dart';
 import 'api/dto/user_ref.dart';
+import 'api/errors.dart';
 import 'api/glpi_api.dart';
 import 'api/itil_type.dart';
 import 'api/rsql.dart';
@@ -15,6 +16,7 @@ import 'auth/auth_controller.dart';
 import 'auth/context_switcher.dart';
 import 'db/app_database.dart';
 import 'models/attachment.dart';
+import 'models/capabilities.dart';
 import 'models/catalog_item.dart';
 import 'models/entity_node.dart';
 import 'models/itil_link.dart';
@@ -382,6 +384,29 @@ final formCatalogProvider = FutureProvider<List<FormSummaryDto>>((ref) async {
   return api.listForms();
 });
 
+/// Which level of the service catalog is being looked at: a category (0 at the
+/// root) and the search filter, which — as in the web catalog — searches across
+/// every category rather than inside the current one.
+typedef ServiceCatalogQuery = ({int category, String filter});
+
+/// One level of the service catalog, with the entity's display settings.
+///
+/// A family rather than one provider because each level is its own screen: the
+/// app pushes a route per category, so going back is GLPI's breadcrumb without
+/// the app having to keep a stack of its own.
+final serviceCatalogProvider =
+    FutureProvider.family<ServiceCatalogPageDto, ServiceCatalogQuery>((
+      ref,
+      query,
+    ) async {
+      final api = ref.watch(glpiApiProvider);
+      if (api == null) return ServiceCatalogPageDto.empty;
+      return api.fetchServiceCatalog(
+        category: query.category,
+        filter: query.filter,
+      );
+    });
+
 /// A single form's full definition (sections/questions/options).
 final formDefinitionProvider = FutureProvider.family<FormDefinitionDto, int>((
   ref,
@@ -605,6 +630,50 @@ final entityTreeProvider = FutureProvider<List<EntityNode>>((ref) async {
   return EntityNode.listFromJson(jsonDecode(row.value) as List<Object?>);
 });
 
+/// Which optional server-plugin features this server offers (drawer modules,
+/// per-action gates). Fetched once the account is Ready and re-fetched on
+/// login/context change; [SyncScope] also invalidates it on app resume.
+///
+/// The last-known map is cached in [AppConfig] so gating still works offline.
+/// A 404 (an older companion plugin without the endpoint) means the server
+/// affirmatively has no optional features — the cache is cleared. Any other
+/// failure falls back to the cache, then to [Capabilities.empty]: features
+/// hide, nothing crashes.
+final capabilitiesProvider = FutureProvider<Capabilities>((ref) async {
+  ref.watch(authControllerProvider); // refetch after login / context change
+  final db = ref.watch(databaseProvider);
+  final api = ref.watch(glpiApiProvider);
+  const key = 'capabilities';
+  if (api != null) {
+    try {
+      final caps = await api.fetchCapabilities();
+      await db
+          .into(db.appConfig)
+          .insertOnConflictUpdate(
+            AppConfigCompanion.insert(
+              key: key,
+              value: jsonEncode(caps.toJson()),
+            ),
+          );
+      return caps;
+    } on GlpiNotFoundError {
+      await (db.delete(db.appConfig)..where((c) => c.key.equals(key))).go();
+      return Capabilities.empty;
+    } on Exception {
+      // Fall through to the cache.
+    }
+  }
+  final row = await (db.select(
+    db.appConfig,
+  )..where((c) => c.key.equals(key))).getSingleOrNull();
+  if (row == null) return Capabilities.empty;
+  try {
+    return Capabilities.fromJson(jsonDecode(row.value));
+  } on Exception {
+    return Capabilities.empty;
+  }
+});
+
 /// The current session as GLPI sees it — used for the profile list.
 final sessionInfoProvider = FutureProvider<SessionInfo?>((ref) async {
   ref.watch(authControllerProvider);
@@ -667,6 +736,19 @@ class PendingTaskMinutes extends Notifier<int?> {
 final pendingTaskMinutesProvider = NotifierProvider<PendingTaskMinutes, int?>(
   PendingTaskMinutes.new,
 );
+
+/// Set by the KEDB banner's "Use workaround" to pre-fill the reply composer
+/// with the workaround snippet — the technician still reads it, still edits
+/// it, and still presses Send. Consumed (and cleared) by the composer, the
+/// same handshake as [pendingTaskMinutesProvider].
+class PendingComposerText extends Notifier<String?> {
+  @override
+  String? build() => null;
+  void set(String? text) => state = text;
+}
+
+final pendingComposerTextProvider =
+    NotifierProvider<PendingComposerText, String?>(PendingComposerText.new);
 
 /// Count of pending (not-done) ops for a ticket — drives the "sending" badge.
 final ticketPendingCountProvider = StreamProvider.family<int, String>((

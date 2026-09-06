@@ -23,6 +23,7 @@ class EntitySwitcherSheet extends ConsumerStatefulWidget {
   /// Returns true when the context actually changed.
   static Future<bool> show(BuildContext context) async =>
       await showModalBottomSheet<bool>(
+        useSafeArea: true,
         context: context,
         constraints: sheetConstraints(context),
         isScrollControlled: true,
@@ -64,7 +65,7 @@ class _EntitySwitcherSheetState extends ConsumerState<EntitySwitcherSheet> {
     return SafeArea(
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.8,
+          maxHeight: sheetContentHeight(context, fraction: 0.8),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

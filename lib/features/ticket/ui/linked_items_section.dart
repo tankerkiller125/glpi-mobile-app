@@ -145,6 +145,7 @@ class LinkPickerSheet {
     return showModalBottomSheet<
       ({String itemtype, int serverId, String name, int status, int linkType})
     >(
+      useSafeArea: true,
       context: context,
       constraints: sheetConstraints(context),
       isScrollControlled: true,

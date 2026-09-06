@@ -28,6 +28,7 @@ class ProjectTaskSheet extends ConsumerStatefulWidget {
     ProjectTask? task,
     int? parentTaskServerId,
   }) => showModalBottomSheet<void>(
+    useSafeArea: true,
     context: context,
     constraints: sheetConstraints(context),
     isScrollControlled: true,

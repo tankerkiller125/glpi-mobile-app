@@ -17,6 +17,13 @@ import '../../../core/widgets/info_tile.dart';
 import '../../../core/widgets/rich_content.dart';
 import '../../../core/widgets/section_heading.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../assistant/ui/ai_ticket_section.dart';
+import '../../change_calendar/ui/change_schedule_section.dart';
+import '../../entitle/ui/entitlement_card.dart';
+import '../../kedb/ui/kedb_banner_section.dart';
+import '../../major/ui/major_banner_section.dart';
+import '../../presence/ui/presence_bar.dart';
+import '../../sop/ui/sop_section.dart';
 import '../../timer/timer_banner.dart';
 import 'analysis_section.dart';
 import 'attachments_section.dart';
@@ -51,35 +58,30 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
   bool _refreshedOnce = false;
 
   Future<void> _refresh() async {
-    final serverId = ref
-        .read(ticketDetailProvider(widget.localId))
-        .value
-        ?.serverId;
+    // Read everything before the first await: the awaits below can outlive
+    // this widget — the two-pane layout remounts the detail when the selected
+    // ticket changes, and a fold/unfold can remove the pane entirely — and
+    // touching `ref` after unmount throws.
+    final detail = ref.read(ticketDetailProvider(widget.localId)).value;
+    final serverId = detail?.serverId;
     if (serverId == null) return;
+    final itemtype = detail?.itemtype ?? itilTicket;
     final ticketRepo = ref.read(ticketRepositoryProvider);
     final timelineRepo = ref.read(timelineRepositoryProvider);
+    final attachments = ref.read(attachmentRepositoryProvider);
+    final links = ref.read(itilLinkRepositoryProvider);
     try {
       await ticketRepo?.refreshTicket(
         widget.localId,
         serverId,
-        itemtype:
-            ref.read(ticketDetailProvider(widget.localId)).value?.itemtype ??
-            itilTicket,
+        itemtype: itemtype,
       );
       await timelineRepo?.refreshTimeline(
         widget.localId,
         serverId,
-        itemtype:
-            ref.read(ticketDetailProvider(widget.localId)).value?.itemtype ??
-            itilTicket,
+        itemtype: itemtype,
       );
-      final itemtype =
-          ref.read(ticketDetailProvider(widget.localId)).value?.itemtype ??
-          itilTicket;
-      await ref
-          .read(attachmentRepositoryProvider)
-          ?.refresh(widget.localId, serverId, itemtype: itemtype);
-      final links = ref.read(itilLinkRepositoryProvider);
+      await attachments?.refresh(widget.localId, serverId, itemtype: itemtype);
       await links?.refreshLinks(widget.localId, serverId, itemtype: itemtype);
       if (itemtype != itilTicket) {
         await links?.refreshExtra(widget.localId, serverId, itemtype: itemtype);
@@ -334,6 +336,14 @@ class _DetailBody extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 16),
+              // Optional capability-gated sections; each renders nothing
+              // when its plugin is absent or it has nothing to say — see
+              // MajorBannerSection for the pattern.
+              PresenceBar(item: detail),
+              MajorBannerSection(item: detail),
+              KedbBannerSection(item: detail),
+              EntitlementCard(item: detail),
+              ChangeScheduleSection(item: detail),
               // SLA targets (shown only when the ticket carries a due date).
               if (detail.timeToResolve != null)
                 _DueTile(
@@ -413,6 +423,8 @@ class _DetailBody extends ConsumerWidget {
                 AnalysisSection(item: detail),
               ],
               const SizedBox(height: 12),
+              SopSection(item: detail),
+              AiTicketSection(item: detail),
               LinkedItemsSection(item: detail),
               const SizedBox(height: 12),
               LinkedAssetsSection(item: detail),

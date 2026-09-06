@@ -599,6 +599,11 @@ class OutboxDrainer {
       case GlpiForbiddenError():
       case GlpiNotFoundError():
       case GlpiUnexpectedError():
+      // A policy refusal (e.g. the entitlement gate on an uncontracted
+      // client) is deliberate, not transient: retrying cannot succeed until
+      // the state changes server-side, so it surfaces immediately with the
+      // server's own explanation as the message.
+      case GlpiRejectedError():
         await _fail(op, e);
         return _Outcome.needsAttention;
     }

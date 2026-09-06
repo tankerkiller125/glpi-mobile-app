@@ -108,6 +108,11 @@ class AssetPickerSheet extends ConsumerStatefulWidget {
 
   static Future<CatalogItem?> show(BuildContext context, WidgetRef ref) =>
       showModalBottomSheet<CatalogItem>(
+        useSafeArea: true,
+        // Root navigator: from the embedded two-pane detail the nearest
+        // navigator is the shell branch, whose barrier misses the rail,
+        // bottom bar, and shell FAB (they overlap the sheet on a foldable).
+        useRootNavigator: true,
         context: context,
         constraints: sheetConstraints(context),
         isScrollControlled: true,
@@ -153,7 +158,7 @@ class _AssetPickerSheetState extends ConsumerState<AssetPickerSheet> {
             const SizedBox(height: 8),
             ConstrainedBox(
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.45,
+                maxHeight: sheetContentHeight(context, fraction: 0.45),
               ),
               child: switch (results) {
                 AsyncData(:final value) when value.isEmpty => Padding(

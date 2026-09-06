@@ -42,5 +42,301 @@
       "user": {"type": "String"},
       "server": {"type": "String"}
     }
-  }
+  },
+  "assistantTitle": "Assistant",
+  "assistantAsk": "Ask",
+  "assistantStop": "Stop",
+  "assistantHint": "Ask about this problem…",
+  "assistantThinking": "Thinking…",
+  "assistantWorking": "Working…",
+  "assistantTurn": "Turn {n}…",
+  "@assistantTurn": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "assistantRunningTool": "Looking: {tool}",
+  "@assistantRunningTool": {
+    "placeholders": {
+      "tool": {"type": "String"}
+    }
+  },
+  "assistantHistory": "Past conversations",
+  "assistantNoHistory": "No conversations yet",
+  "assistantUntitled": "Untitled conversation",
+  "assistantClear": "Clear this conversation",
+  "assistantCleared": "Conversation cleared",
+  "assistantEmpty": "Ask about a machine, a ticket, or what you are seeing. The assistant can look things up before answering.",
+  "assistantEmptyOn": "Ask about {context}. The assistant already knows what you have open.",
+  "@assistantEmptyOn": {
+    "placeholders": {
+      "context": {"type": "String"}
+    }
+  },
+  "assistantOnTicket": "Ask the assistant",
+  "aiTitle": "AI",
+  "aiDraftSolution": "Draft a solution",
+  "aiDraftRedo": "Draft again",
+  "aiDrafting": "Drafting…",
+  "aiDraftTitle": "Drafted solution",
+  "aiDraftUse": "Use it",
+  "aiDraftDiscard": "Discard",
+  "aiDraftInserted": "Draft moved into the reply box",
+  "aiDraftDiscarded": "Draft discarded",
+  "aiDraftUnread": "Read it before you send it — it is a draft, not an answer.",
+  "aiConfidence": "Confidence: {level}",
+  "@aiConfidence": {
+    "placeholders": {
+      "level": {"type": "String"}
+    }
+  },
+  "aiTriageTitle": "Suggested triage",
+  "aiTriageRun": "Run triage",
+  "aiTriageRunning": "Triaging…",
+  "aiTriageApply": "Apply",
+  "aiTriageDismiss": "Dismiss",
+  "aiTriageApplied": "Applied",
+  "aiFieldCategory": "Category",
+  "aiFieldUrgency": "Urgency",
+  "aiFieldImpact": "Impact",
+  "aiFieldProcedure": "Procedure",
+  "aiReplyReview": "Check this reply",
+  "aiReplyReviewing": "Reading it…",
+  "aiReplyClean": "Nothing to flag — it reads fine.",
+  "aiReplyTitle": "Before you send",
+  "aiReplySendAnyway": "Send anyway",
+  "aiReplyKeepEditing": "Keep editing",
+  "sopTitle": "Procedure",
+  "sopSectionTitle": "Procedures",
+  "sopOutstanding": "{n, plural, =0{all steps done} =1{1 step outstanding} other{{n} steps outstanding}}",
+  "@sopOutstanding": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "sopProgress": "{done} of {total}",
+  "@sopProgress": {
+    "placeholders": {
+      "done": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "sopBlocking": "This procedure must be finished before the ticket can be solved",
+  "sopReadOnly": "Read-only — this run is locked, or you cannot edit this ticket",
+  "sopSkip": "Skip",
+  "sopUnskip": "Un-skip",
+  "sopSkipped": "Skipped",
+  "sopSkipReason": "Why is this being skipped?",
+  "sopSkipReasonRequired": "Say why this step is being skipped",
+  "sopNote": "Note",
+  "sopNoteHint": "Anything worth recording about this step…",
+  "sopClear": "Clear answer",
+  "sopSave": "Save",
+  "sopAnswerElsewhere": "This step is answered elsewhere — from the ticket itself.",
+  "sopRaiseTicket": "Raise the ticket",
+  "sopRaisedTicket": "Raised ticket #{id}",
+  "@sopRaisedTicket": {
+    "placeholders": {
+      "id": {"type": "int"}
+    }
+  },
+  "sopLog": "History",
+  "sopLogEmpty": "Nothing recorded yet",
+  "sopEmpty": "No procedure is attached to this ticket",
+  "presenceTitle": "Who is on this",
+  "presenceOnlyYou": "Only you",
+  "presenceTyping": "{name} is typing…",
+  "@presenceTyping": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "presenceClaim": "I am working this",
+  "presenceRelease": "Hand it back",
+  "presenceTakeover": "Take it over",
+  "presenceClaimedByYou": "You have this",
+  "presenceClaimedBy": "{name} is working this",
+  "@presenceClaimedBy": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "presenceClaimTaken": "Somebody else claimed it first",
+  "capabilityUnavailableTitle": "Not available",
+  "capabilityUnavailableBody": "This module is not available on this server. It may need a newer companion plugin.",
+  "actionNeedsConnection": "This action needs a connection",
+  "close": "Close",
+  "alertsTitle": "Alerts",
+  "alertsEmpty": "No alerts",
+  "alertsNeedConnection": "No connection — alerts are always live, never cached",
+  "alertNumber": "Alert #{id}",
+  "@alertNumber": {
+    "placeholders": {
+      "id": {"type": "int"}
+    }
+  },
+  "alertStateOpen": "Open",
+  "alertStateAcked": "Acknowledged",
+  "alertStateTicketed": "Ticketed",
+  "alertStateSuppressed": "Suppressed",
+  "alertStateClosed": "Closed",
+  "alertAck": "Acknowledge",
+  "alertAcked": "Alert acknowledged",
+  "alertAckedBy": "acknowledged by {name}",
+  "@alertAckedBy": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "alertClose": "Close alert",
+  "alertClosed": "Alert closed",
+  "alertHost": "Host",
+  "alertItem": "Asset",
+  "alertEvents": "Events",
+  "alertEventCount": "{n, plural, =1{1 event} other{{n} events}}",
+  "@alertEventCount": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "alertFirstSeen": "First seen",
+  "alertLastSeen": "Last seen",
+  "alertOpenTicket": "Open the ticket raised for this alert",
+  "alertPageLog": "Paging log",
+  "alertPageLogEmpty": "Nobody has been paged",
+  "severityCritical": "Critical",
+  "severityHigh": "High",
+  "severityMedium": "Medium",
+  "severityLow": "Low",
+  "severityInfo": "Info",
+  "oncallTitle": "On call",
+  "oncallYou": "You",
+  "oncallNobody": "Nobody",
+  "oncallHandoff": "{name} takes over {when}",
+  "@oncallHandoff": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "when": {"type": "String"}
+    }
+  },
+  "majorTitle": "Major incidents",
+  "majorEmpty": "No open major incidents",
+  "majorNumber": "Major incident #{id}",
+  "@majorNumber": {
+    "placeholders": {
+      "id": {"type": "int"}
+    }
+  },
+  "majorBanner": "Major incident",
+  "majorDeclare": "Declare major incident",
+  "majorAttach": "Attach to major incident",
+  "majorAttached": "Attached to major incident",
+  "majorDeclared": "Major incident declared",
+  "majorCommander": "Commander",
+  "majorDeclaredAt": "Declared",
+  "majorNextUpdate": "Next update",
+  "majorUpdates": "Updates",
+  "majorUpdatesEmpty": "No updates posted yet",
+  "majorPostUpdate": "Post update",
+  "majorAudienceInternal": "Internal",
+  "majorAudienceCustomer": "Customer",
+  "majorUpdatePosted": "Update posted",
+  "majorUpdateHint": "What changed? What happens next?…",
+  "majorTicket": "Ticket",
+  "majorTitleLabel": "Title",
+  "majorFirstUpdateHint": "First status update (optional)…",
+  "majorOutcomeNeeded": "Describe the outcome before resolving — this incident requires a post-incident review.",
+  "majorStateOpen": "Open",
+  "majorStateInvestigating": "Investigating",
+  "majorStateIdentified": "Identified",
+  "majorStateMonitoring": "Monitoring",
+  "majorStateResolved": "Resolved",
+  "majorStateClosed": "Closed",
+  "majorResolve": "Mark resolved",
+  "majorResolved": "Incident resolved",
+  "kedbTitle": "Known errors",
+  "kedbEmpty": "No known errors recorded",
+  "kedbNoMatches": "Nothing matches that",
+  "kedbSearchHint": "Search known errors…",
+  "kedbClearSearch": "Clear the search",
+  "kedbNeedsConnection": "No connection — the known-error database is server-side only",
+  "kedbBanner": "Known error",
+  "kedbUseWorkaround": "Use workaround",
+  "kedbWorkaroundInserted": "Workaround moved into the reply box",
+  "kedbDismiss": "Dismiss",
+  "kedbDismissed": "Dismissed",
+  "kedbHasWorkaround": "Workaround available",
+  "kedbStatusKnown": "Known",
+  "kedbStatusFixInProgress": "Fix in progress",
+  "kedbStatusRetired": "Retired",
+  "kedbIdentified": "Identified",
+  "kedbSymptom": "Symptom",
+  "kedbRootCause": "Root cause",
+  "kedbWorkaround": "Workaround",
+  "kedbProblem": "Problem",
+  "kedbSoftware": "Software",
+  "kedbUseCount": "{n, plural, =1{used once} other{used {n} times}}",
+  "@kedbUseCount": {
+    "placeholders": {
+      "n": {"type": "int"}
+    }
+  },
+  "changeCalendarTitle": "Change calendar",
+  "changeCalendarEmpty": "Nothing scheduled",
+  "changeScheduleTitle": "Schedule",
+  "changeWindowNone": "No window planned",
+  "changeNoConflicts": "No conflicts",
+  "changeFreeze": "Freeze",
+  "changeRelease": "Release",
+  "changeTypeChange": "Change",
+  "changeCollisionSharedCi": "Shares an asset with another change",
+  "changeCollisionImpactCi": "Touches an asset another change impacts",
+  "changeCollisionDismissed": "dismissed: {reason}",
+  "@changeCollisionDismissed": {
+    "placeholders": {
+      "reason": {"type": "String"}
+    }
+  },
+  "changeFreezeWarning": "Inside the {title} freeze",
+  "@changeFreezeWarning": {
+    "placeholders": {
+      "title": {"type": "String"}
+    }
+  },
+  "entitleTitle": "Cover",
+  "entitleNoContract": "No contract covers this customer",
+  "entitleNoLabor": "No contract covers labour on this ticket",
+  "entitleNoRate": "No rate is set, so this work cannot be priced",
+  "entitleBlocked": "This work is not covered",
+  "entitleApprovalNeeded": "This work needs approval before it is done",
+  "entitleUncontractedBillable": "Billable — no contract covers it",
+  "entitleBillsTicket": "Bills this ticket",
+  "entitleEndsSoon": "Ends {date}",
+  "@entitleEndsSoon": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "entitleLapsed": "{contract} ({model}) ran out on {ended}",
+  "@entitleLapsed": {
+    "placeholders": {
+      "contract": {"type": "String"},
+      "model": {"type": "String"},
+      "ended": {"type": "String"}
+    }
+  },
+  "entitleBlockHours": "{used} of {pool} hours used",
+  "@entitleBlockHours": {
+    "placeholders": {
+      "used": {"type": "String"},
+      "pool": {"type": "String"}
+    }
+  },
+  "entitleStale": "Answered {age} ago",
+  "@entitleStale": {
+    "placeholders": {
+      "age": {"type": "String"}
+    }
+  },
+  "assistantOffline": "The assistant needs a connection — it asks the model on your server, and nothing about it works offline."
 }

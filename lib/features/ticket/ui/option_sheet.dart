@@ -23,6 +23,11 @@ class OptionSheet extends StatelessWidget {
     required List<OptionItem> options,
     required int current,
   }) => showModalBottomSheet<int>(
+    useSafeArea: true,
+    // Root navigator: from the embedded two-pane detail the nearest
+    // navigator is the shell branch, whose barrier misses the rail,
+    // bottom bar, and shell FAB (they overlap the sheet on a foldable).
+    useRootNavigator: true,
     context: context,
     constraints: sheetConstraints(context),
     showDragHandle: true,

@@ -25,6 +25,38 @@ void main() {
       expect(profile.entities.single.isRecursive, isTrue);
       expect(session.activeProfileId, 4);
     });
+
+    test('parses the map-shaped entities/groups a scoped user gets', () {
+      // GLPI serialises profiles[].entities (and groups) as a JSON object
+      // keyed by id whenever the PHP array keys are not sequential — the
+      // shape captured live for a Technician scoped to one sub-entity.
+      final session = SessionInfo.fromJson({
+        'user_id': 202,
+        'name': 'glpimobile-m3-scope',
+        'friendly_name': 'glpimobile-m3-scope',
+        'groups': {'12': 12, '31': 31},
+        'profiles': {
+          '6': {
+            'name': 'Technician',
+            'entities': {
+              '679': {
+                'id': 679,
+                'name': 'Entitle Parity Fixture',
+                'is_recursive': 0,
+              },
+            },
+          },
+        },
+        'active_profile': {'id': 6, 'name': 'Technician'},
+      });
+      expect(session.userId, 202);
+      expect(session.groupIds, [12, 31]);
+      final profile = session.profiles.single;
+      expect(profile.id, 6);
+      expect(profile.entities.single.id, 679);
+      expect(profile.entities.single.isRecursive, isFalse);
+      expect(session.activeProfileId, 6);
+    });
   });
 
   group('EntityNode', () {

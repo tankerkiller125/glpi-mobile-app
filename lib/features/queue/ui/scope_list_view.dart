@@ -102,7 +102,11 @@ class ScopeListView extends ConsumerWidget {
             right: 16,
             bottom: 16,
             child: FloatingActionButton(
-              heroTag: 'newTicketPane',
+              // Per-scope: the shell keeps every branch (Mine/Groups/
+              // Unassigned) mounted, so a shared tag means three live Heroes
+              // with the same identity and a framework assertion on every
+              // route push while the two-pane layout is up.
+              heroTag: 'newTicketPane-${scope.name}',
               onPressed: () => context.push(Routes.catalog),
               tooltip: 'New ticket',
               child: const Icon(Icons.add),

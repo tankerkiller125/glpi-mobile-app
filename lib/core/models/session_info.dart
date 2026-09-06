@@ -27,9 +27,13 @@ class SessionInfo {
       userId: (json['user_id'] as num).toInt(),
       username: json['name'] as String? ?? '',
       friendlyName: json['friendly_name'] as String? ?? '',
-      groupIds: (json['groups'] as List<Object?>? ?? const [])
-          .map((e) => (e as num).toInt())
-          .toList(),
+      groupIds: switch (json['groups']) {
+        final List<Object?> list => [for (final e in list) (e! as num).toInt()],
+        final Map<String, Object?> map => [
+          for (final e in map.values) (e! as num).toInt(),
+        ],
+        _ => const [],
+      },
       profiles:
           profilesRaw.entries
               .map(
@@ -63,10 +67,23 @@ class SessionProfile {
       SessionProfile(
         id: id,
         name: json['name'] as String? ?? 'Profile $id',
-        entities: (json['entities'] as List<Object?>? ?? const [])
-            .map((e) => ProfileEntity.fromJson(e! as Map<String, Object?>))
-            .toList(),
+        entities: _entitiesOf(json['entities']),
       );
+
+  /// GLPI serialises this PHP array as a JSON array when its keys happen to
+  /// be sequential, and as an object keyed by entity id otherwise — which is
+  /// the shape every technician scoped to a non-root entity gets. Casting to
+  /// a list only made restricted users unable to sign in at all.
+  static List<ProfileEntity> _entitiesOf(Object? raw) => switch (raw) {
+    final List<Object?> list => [
+      for (final e in list) ProfileEntity.fromJson(e! as Map<String, Object?>),
+    ],
+    final Map<String, Object?> map => [
+      for (final e in map.values)
+        ProfileEntity.fromJson(e! as Map<String, Object?>),
+    ],
+    _ => const [],
+  };
 }
 
 class ProfileEntity {

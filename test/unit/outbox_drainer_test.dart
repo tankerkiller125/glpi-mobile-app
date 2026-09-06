@@ -885,6 +885,29 @@ void main() {
     expect((await ops()).single.status, OpStatus.needsAttention);
   });
 
+  test('a policy rejection goes straight to needs-attention with the server\'s '
+      'refusal text as the message', () async {
+    // The entitlement gate refusing a followup on an uncontracted client:
+    // errors.dart maps the 500-with-additional_messages body to this.
+    await writer.addFollowup(
+      ticketLocalId: 't1',
+      ticketServerId: 3,
+      content: 'reply',
+      isPrivate: false,
+    );
+    api.failNext = const GlpiRejectedError(
+      'This client has no active support contract — responses are blocked '
+      'by their uncontracted-work policy. Renew the contract in ERPNext to '
+      'continue.',
+    );
+
+    await drainer.drain();
+    final op = (await ops()).single;
+    expect(op.status, OpStatus.needsAttention);
+    expect(op.lastError, contains('no active support contract'));
+    expect(op.nextRetryAt, isNull); // not on the retry ladder
+  });
+
   test('network error schedules a retry with backoff, no permanence', () async {
     await writer.setStatus(ticketLocalId: 't1', ticketServerId: 3, status: 2);
     api.failNext = const GlpiNetworkError('offline');

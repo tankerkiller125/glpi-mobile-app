@@ -15,6 +15,11 @@ class UserPicker extends ConsumerStatefulWidget {
 
   static Future<UserRef?> show(BuildContext context, {required String title}) =>
       showModalBottomSheet<UserRef>(
+        useSafeArea: true,
+        // Root navigator: from the embedded two-pane detail the nearest
+        // navigator is the shell branch, whose barrier misses the rail,
+        // bottom bar, and shell FAB (they overlap the sheet on a foldable).
+        useRootNavigator: true,
         context: context,
         constraints: sheetConstraints(context),
         showDragHandle: true,
@@ -54,7 +59,13 @@ class _UserPickerState extends ConsumerState<UserPicker> {
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
         child: SizedBox(
-          height: MediaQuery.of(context).size.height * 0.6,
+          // Against what is *left*, not against the window. The sheet already
+          // pads itself by the keyboard's height above, so sizing this to a
+          // fraction of the whole screen made the sheet taller than the screen
+          // once the keyboard came up — pushing the drag handle behind the
+          // status bar, where a downward swipe opens the notification shade
+          // instead of closing the sheet.
+          height: sheetContentHeight(context),
           child: Column(
             children: [
               Padding(

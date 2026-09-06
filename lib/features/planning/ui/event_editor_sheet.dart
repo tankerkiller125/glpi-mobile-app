@@ -5,6 +5,7 @@ import '../../../core/models/planning_event.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/date_time_field.dart';
+import '../../change_calendar/ui/freeze_warning.dart';
 
 /// Create or edit a standalone calendar entry: a `PlanningExternalEvent` or a
 /// `Reminder`. Both share this editor because GLPI models them almost
@@ -31,6 +32,7 @@ class EventEditorSheet extends ConsumerStatefulWidget {
     DateTime? initialBegin,
     DateTime? initialEnd,
   }) => showModalBottomSheet<void>(
+    useSafeArea: true,
     context: context,
     constraints: sheetConstraints(context),
     isScrollControlled: true,
@@ -146,6 +148,9 @@ class _EventEditorSheetState extends ConsumerState<EventEditorSheet> {
               value: _end,
               onChanged: (v) => setState(() => _end = v),
             ),
+            // Courtesy heads-up when the picked window crosses a change
+            // freeze (renders nothing without the glpichange capability).
+            FreezeWarning(begin: _begin, end: _end),
             const SizedBox(height: 12),
             SegmentedButton<int>(
               segments: const [

@@ -106,6 +106,7 @@ class _PlanningScreenState extends ConsumerState<PlanningScreen> {
 
   Future<void> _create(BuildContext context) async {
     final kind = await showModalBottomSheet<String>(
+      useSafeArea: true,
       context: context,
       constraints: sheetConstraints(context),
       builder: (context) => SafeArea(
