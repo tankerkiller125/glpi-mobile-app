@@ -44,11 +44,14 @@ void main() {
       expect(run.fraction, closeTo(3 / 14, 0.001));
     });
 
-    test('a run with no steps reads as complete rather than dividing by zero', () {
-      final run = SopRunDto.fromJson(const {'id': 1, 'total': 0, 'done': 0});
-      expect(run.fraction, 1);
-      expect(run.outstanding, 0);
-    });
+    test(
+      'a run with no steps reads as complete rather than dividing by zero',
+      () {
+        final run = SopRunDto.fromJson(const {'id': 1, 'total': 0, 'done': 0});
+        expect(run.fraction, 1);
+        expect(run.outstanding, 0);
+      },
+    );
   });
 
   group('Steps', () {

@@ -129,7 +129,14 @@ void main() {
 
     test('a truncated payload is dropped, not thrown', () async {
       final events = await decodeSse(
-        lines(['event: text', 'data: {"text":', '', 'event: done', 'data: {}', '']),
+        lines([
+          'event: text',
+          'data: {"text":',
+          '',
+          'event: done',
+          'data: {}',
+          '',
+        ]),
       ).toList();
 
       expect(events, hasLength(1));
@@ -146,7 +153,13 @@ void main() {
 
     test('comments and unknown fields are ignored', () async {
       final events = await decodeSse(
-        lines([': keep-alive', 'id: 4', 'event: open', 'data: {"thread":9}', '']),
+        lines([
+          ': keep-alive',
+          'id: 4',
+          'event: open',
+          'data: {"thread":9}',
+          '',
+        ]),
       ).toList();
 
       expect(events.single.event, 'open');

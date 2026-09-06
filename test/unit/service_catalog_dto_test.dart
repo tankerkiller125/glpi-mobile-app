@@ -76,10 +76,10 @@ void main() {
       // Pinned first, then categories, then the entity's sort strategy — all
       // decided server-side. Re-sorting here would silently disagree with the
       // portal the same technician uses at a desk.
-      expect(
-        page.items.map((i) => i.kind).toList(),
-        [ServiceCatalogItemKind.category, ServiceCatalogItemKind.kb],
-      );
+      expect(page.items.map((i) => i.kind).toList(), [
+        ServiceCatalogItemKind.category,
+        ServiceCatalogItemKind.kb,
+      ]);
     });
   });
 
