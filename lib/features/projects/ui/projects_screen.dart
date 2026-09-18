@@ -10,6 +10,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatting.dart';
 import '../../../core/widgets/accessible_refresh.dart';
 import '../../../core/widgets/due_badge.dart';
+import '../../../core/widgets/rights_gate.dart';
 import '../../../core/widgets/status_chip.dart';
 
 /// Projects list: progress at a glance, at-risk end dates flagged.
@@ -50,46 +51,51 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
               )
               .toList();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Projects'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: TextField(
-              decoration: const InputDecoration(
-                hintText: 'Search projects…',
-                prefixIcon: Icon(Icons.search),
-                isDense: true,
-                border: OutlineInputBorder(),
+    return RightsGate(
+      allows: (r) => r.canViewProjects,
+      title: 'Projects',
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Projects'),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: TextField(
+                decoration: const InputDecoration(
+                  hintText: 'Search projects…',
+                  prefixIcon: Icon(Icons.search),
+                  isDense: true,
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (v) => setState(() => _query = v),
               ),
-              onChanged: (v) => setState(() => _query = v),
             ),
           ),
         ),
-      ),
-      body: AccessibleRefresh(
-        onRefresh: _refresh,
-        child: projects.isEmpty
-            ? ListView(
-                children: [
-                  const SizedBox(height: 100),
-                  Center(
-                    child: Text(
-                      all.isEmpty ? 'No projects' : 'No matches',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.outline,
+        body: AccessibleRefresh(
+          onRefresh: _refresh,
+          child: projects.isEmpty
+              ? ListView(
+                  children: [
+                    const SizedBox(height: 100),
+                    Center(
+                      child: Text(
+                        all.isEmpty ? 'No projects' : 'No matches',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              )
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: projects.length,
-                itemBuilder: (context, i) => _ProjectCard(project: projects[i]),
-              ),
+                  ],
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: projects.length,
+                  itemBuilder: (context, i) =>
+                      _ProjectCard(project: projects[i]),
+                ),
+        ),
       ),
     );
   }

@@ -9,7 +9,7 @@ import UserNotifications
 // token and hands it — plus notification taps — to Dart over a method channel.
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
-  private static let channelName = "com.tankerkiller125.glpi/push"
+  private static let channelName = "com.bijstaan.glpi/push"
   private var pushChannel: FlutterMethodChannel?
 
   override func application(

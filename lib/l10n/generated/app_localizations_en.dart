@@ -546,7 +546,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get majorAudienceInternal => 'Internal';
 
   @override
-  String get majorAudienceCustomer => 'Customer';
+  String get majorAudienceCustomer => 'Public';
 
   @override
   String get majorUpdatePosted => 'Update posted';
@@ -711,7 +711,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get entitleTitle => 'Cover';
 
   @override
-  String get entitleNoContract => 'No contract covers this customer';
+  String get entitleNoContract => 'No contract covers this entity';
 
   @override
   String get entitleNoLabor => 'No contract covers labour on this ticket';
@@ -755,4 +755,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get assistantOffline =>
       'The assistant needs a connection — it asks the model on your server, and nothing about it works offline.';
+
+  @override
+  String get rightsUnavailableTitle => 'Not available to you';
+
+  @override
+  String get rightsUnavailableBody =>
+      'Your GLPI profile doesn\'t include this. An administrator can grant it, or you can switch to another profile if you have one.';
+
+  @override
+  String get rightsReadOnly => 'Read-only with your profile';
 }

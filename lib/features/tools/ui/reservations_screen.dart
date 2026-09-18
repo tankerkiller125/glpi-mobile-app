@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/dto/tools_dto.dart';
+import '../../../core/models/rights.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/formatting.dart';
 import '../../../core/widgets/accessible_refresh.dart';
+import '../../../core/widgets/rights_gate.dart';
 import 'reservation_booking.dart';
 
 /// Reservations: browse bookable items and book or cancel a slot. GLPI rejects
@@ -22,30 +24,38 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reservations'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: SegmentedButton<bool>(
-              segments: const [
-                ButtonSegment(value: false, label: Text('Items')),
-                ButtonSegment(value: true, label: Text('Mine')),
-              ],
-              selected: {_mine},
-              onSelectionChanged: (s) => setState(() => _mine = s.first),
+    return RightsGate(
+      allows: (r) => r.canViewReservations,
+      title: 'Reservations',
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Reservations'),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(48),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: false, label: Text('Items')),
+                  ButtonSegment(value: true, label: Text('Mine')),
+                ],
+                selected: {_mine},
+                onSelectionChanged: (s) => setState(() => _mine = s.first),
+              ),
             ),
           ),
         ),
+        body: _mine ? _buildMine() : _buildItems(),
       ),
-      body: _mine ? _buildMine() : _buildItems(),
     );
   }
 
   Widget _buildItems() {
     final items = ref.watch(reservationItemsProvider);
+    // Browsing the reservable items is a READ; booking one is not. A profile
+    // that can only look keeps the list, without the tap that leads to a 403.
+    final canBook =
+        (ref.watch(rightsProvider).value ?? Rights.empty).canBookReservations;
     return Column(
       children: [
         Padding(
@@ -91,8 +101,12 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
                             : list[i].name,
                       ),
                       subtitle: Text(list[i].itemtype),
-                      trailing: const Icon(Icons.event_available_outlined),
-                      onTap: () => bookReservation(context, ref, list[i]),
+                      trailing: canBook
+                          ? const Icon(Icons.event_available_outlined)
+                          : null,
+                      onTap: canBook
+                          ? () => bookReservation(context, ref, list[i])
+                          : null,
                     ),
                   );
                 },
@@ -115,6 +129,8 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
 
   Widget _buildMine() {
     final reservations = ref.watch(reservationsProvider);
+    final canCancel =
+        (ref.watch(rightsProvider).value ?? Rights.empty).canCancelReservations;
     return AccessibleRefresh(
       onRefresh: () async => ref.invalidate(reservationsProvider),
       child: switch (reservations) {
@@ -131,7 +147,9 @@ class _ReservationsScreenState extends ConsumerState<ReservationsScreen> {
             final r = value[i];
             return Dismissible(
               key: ValueKey(r.id),
-              direction: DismissDirection.endToStart,
+              direction: canCancel
+                  ? DismissDirection.endToStart
+                  : DismissDirection.none,
               background: Container(
                 alignment: Alignment.centerRight,
                 padding: const EdgeInsets.only(right: 20),

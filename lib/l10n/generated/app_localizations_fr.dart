@@ -764,4 +764,14 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get assistantOffline =>
       'L\'assistant nécessite une connexion : il interroge le modèle sur votre serveur, et rien n\'en fonctionne hors ligne.';
+
+  @override
+  String get rightsUnavailableTitle => 'Indisponible pour vous';
+
+  @override
+  String get rightsUnavailableBody =>
+      'Votre profil GLPI ne l\'inclut pas. Un administrateur peut vous l\'accorder, ou vous pouvez changer de profil si vous en avez un autre.';
+
+  @override
+  String get rightsReadOnly => 'Lecture seule avec votre profil';
 }

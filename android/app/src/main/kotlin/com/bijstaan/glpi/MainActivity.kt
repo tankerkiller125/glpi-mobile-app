@@ -1,4 +1,4 @@
-package com.tankerkiller125.glpi
+package com.bijstaan.glpi
 
 import io.flutter.embedding.android.FlutterActivity
 

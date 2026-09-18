@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/a11y/a11y.dart';
 import '../../../core/models/planning_event.dart';
 import '../../../core/models/reminder.dart';
+import '../../../core/models/rights.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatting.dart';
@@ -11,6 +12,7 @@ import '../../../core/utils/html_text.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/accessible_refresh.dart';
 import '../../../core/widgets/date_time_field.dart';
+import '../../../core/widgets/rights_gate.dart';
 
 /// Reminders: personal notes, optionally scheduled into the planning calendar.
 /// Reminders shared by other users are shown read-only.
@@ -39,36 +41,43 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
     }
     final reminders = ref.watch(remindersProvider).value ?? const <Reminder>[];
+    final rights = ref.watch(rightsProvider).value ?? Rights.empty;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reminders')),
-      body: AccessibleRefresh(
-        onRefresh: _refresh,
-        child: reminders.isEmpty
-            ? ListView(
-                children: [
-                  const SizedBox(height: 100),
-                  Center(
-                    child: Text(
-                      'No reminders',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.outline,
+    return RightsGate(
+      allows: (r) => r.canViewReminders,
+      title: 'Reminders',
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Reminders')),
+        body: AccessibleRefresh(
+          onRefresh: _refresh,
+          child: reminders.isEmpty
+              ? ListView(
+                  children: [
+                    const SizedBox(height: 100),
+                    Center(
+                      child: Text(
+                        'No reminders',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: reminders.length,
+                  itemBuilder: (context, i) =>
+                      _ReminderCard(reminder: reminders[i]),
+                ),
+        ),
+        floatingActionButton: rights.canCreateReminder
+            ? FloatingActionButton(
+                onPressed: () => ReminderEditor.show(context),
+                tooltip: 'New reminder',
+                child: const Icon(Icons.add),
               )
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: reminders.length,
-                itemBuilder: (context, i) =>
-                    _ReminderCard(reminder: reminders[i]),
-              ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => ReminderEditor.show(context),
-        tooltip: 'New reminder',
-        child: const Icon(Icons.add),
+            : null,
       ),
     );
   }

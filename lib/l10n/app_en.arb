@@ -239,7 +239,7 @@
   "majorUpdatesEmpty": "No updates posted yet",
   "majorPostUpdate": "Post update",
   "majorAudienceInternal": "Internal",
-  "majorAudienceCustomer": "Customer",
+  "majorAudienceCustomer": "Public",
   "majorUpdatePosted": "Update posted",
   "majorUpdateHint": "What changed? What happens next?…",
   "majorTicket": "Ticket",
@@ -304,7 +304,7 @@
     }
   },
   "entitleTitle": "Cover",
-  "entitleNoContract": "No contract covers this customer",
+  "entitleNoContract": "No contract covers this entity",
   "entitleNoLabor": "No contract covers labour on this ticket",
   "entitleNoRate": "No rate is set, so this work cannot be priced",
   "entitleBlocked": "This work is not covered",
@@ -338,5 +338,8 @@
       "age": {"type": "String"}
     }
   },
-  "assistantOffline": "The assistant needs a connection — it asks the model on your server, and nothing about it works offline."
+  "assistantOffline": "The assistant needs a connection — it asks the model on your server, and nothing about it works offline.",
+  "rightsUnavailableTitle": "Not available to you",
+  "rightsUnavailableBody": "Your GLPI profile doesn't include this. An administrator can grant it, or you can switch to another profile if you have one.",
+  "rightsReadOnly": "Read-only with your profile"
 }

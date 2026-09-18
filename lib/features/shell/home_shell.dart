@@ -7,10 +7,12 @@ import 'package:go_router/go_router.dart';
 import '../../core/a11y/a11y.dart';
 import '../../core/api/itil_type.dart';
 import '../../core/auth/auth_controller.dart';
+import '../../core/models/rights.dart';
 import '../../core/providers.dart';
 import '../../core/router/app_router.dart';
 import '../../core/sync/connectivity.dart';
 import '../../core/utils/layout.dart';
+import '../../core/widgets/rights_gate.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../queue/queue_controls.dart';
 import '../queue/ui/filter_sheet.dart';
@@ -121,6 +123,22 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       });
     });
 
+    final rights = ref.watch(rightsProvider).value ?? Rights.empty;
+    // GLPI gives ticket, change and problem rights separately, and plenty of
+    // profiles hold only the first. The switcher offers what this one can
+    // read; when the active module isn't among them (a profile switch, or a
+    // right revoked while the app was closed) the shell moves itself to one
+    // that is, rather than sitting on a queue that answers 403.
+    final modules = itilTypes.where(rights.canViewItil).toList();
+    final module = ref.watch(itilModuleProvider);
+    if (modules.isNotEmpty && !modules.contains(module)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(itilModuleProvider.notifier).set(modules.first);
+        _refresh();
+      });
+    }
+
     final filterCount = ref.watch(
       queueControlsProvider.select((c) => c.activeFilterCount),
     );
@@ -170,7 +188,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                 ),
               ),
         actions: [
-          if (!_searching)
+          // One module is not a choice; the button goes rather than opening a
+          // menu with a single entry already selected.
+          if (!_searching && modules.length > 1)
             PopupMenuButton<String>(
               tooltip: 'Switch module',
               icon: const Icon(Icons.swap_horiz),
@@ -180,7 +200,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                 _refresh();
               },
               itemBuilder: (context) => [
-                for (final t in itilTypes)
+                for (final t in modules)
                   PopupMenuItem(
                     value: t,
                     child: ListTile(
@@ -213,51 +233,54 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         ],
       ),
       body: SyncScope(
-        child: Row(
-          children: [
-            // Bar or rail, and collapsed or labelled, is Material's adaptive
-            // rule rather than ours — see navStyleOf.
-            if (nav.isRail)
-              NavigationRail(
-                extended: nav == NavStyle.extendedRail,
-                selectedIndex: widget.shell.currentIndex,
-                onDestinationSelected: _goBranch,
-                labelType: nav == NavStyle.extendedRail
-                    ? NavigationRailLabelType.none
-                    : NavigationRailLabelType.all,
-                destinations: [
-                  NavigationRailDestination(
-                    icon: const Icon(Icons.person_outline),
-                    selectedIcon: const Icon(Icons.person),
-                    label: Text(l.queueTabMine),
-                  ),
-                  NavigationRailDestination(
-                    icon: const Icon(Icons.groups_outlined),
-                    selectedIcon: const Icon(Icons.groups),
-                    label: Text(l.queueTabGroups),
-                  ),
-                  NavigationRailDestination(
-                    icon: const Icon(Icons.inbox_outlined),
-                    selectedIcon: const Icon(Icons.inbox),
-                    label: Text(l.queueTabUnassigned),
-                  ),
-                ],
-              ),
-            Expanded(
-              child: Column(
+        child: modules.isEmpty
+            ? const NotPermittedBody()
+            : Row(
                 children: [
-                  Expanded(child: widget.shell),
-                  const TimerBanner(),
+                  // Bar or rail, and collapsed or labelled, is Material's adaptive
+                  // rule rather than ours — see navStyleOf.
+                  if (nav.isRail)
+                    NavigationRail(
+                      extended: nav == NavStyle.extendedRail,
+                      selectedIndex: widget.shell.currentIndex,
+                      onDestinationSelected: _goBranch,
+                      labelType: nav == NavStyle.extendedRail
+                          ? NavigationRailLabelType.none
+                          : NavigationRailLabelType.all,
+                      destinations: [
+                        NavigationRailDestination(
+                          icon: const Icon(Icons.person_outline),
+                          selectedIcon: const Icon(Icons.person),
+                          label: Text(l.queueTabMine),
+                        ),
+                        NavigationRailDestination(
+                          icon: const Icon(Icons.groups_outlined),
+                          selectedIcon: const Icon(Icons.groups),
+                          label: Text(l.queueTabGroups),
+                        ),
+                        NavigationRailDestination(
+                          icon: const Icon(Icons.inbox_outlined),
+                          selectedIcon: const Icon(Icons.inbox),
+                          label: Text(l.queueTabUnassigned),
+                        ),
+                      ],
+                    ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Expanded(child: widget.shell),
+                        const TimerBanner(),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ],
-        ),
       ),
       // In two-pane mode the scaffold's bottom-right is the *detail* pane,
       // where the FAB lands on top of the reply box. There it belongs to the
       // list column instead (see ScopeListView).
-      floatingActionButton: _searching || size.hasTwoPanes
+      floatingActionButton:
+          _searching || size.hasTwoPanes || !rights.canCreateItil(itilTicket)
           ? null
           : FloatingActionButton(
               onPressed: () => context.push(Routes.catalog),

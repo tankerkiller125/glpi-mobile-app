@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers.dart';
 import '../../../core/widgets/accessible_refresh.dart';
+import '../../../core/widgets/rights_gate.dart';
 import '../../ticket/ui/option_sheet.dart';
 import 'catalog_tile.dart';
 
@@ -114,72 +115,76 @@ class _CatalogListScreenState extends ConsumerState<CatalogListScreen> {
                 i,
           ];
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.itemtype),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(104),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    hintText: 'Name, serial or asset tag…',
-                    prefixIcon: Icon(Icons.search),
-                    isDense: true,
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: _onQueryChanged,
-                ),
-              ),
-              SizedBox(
-                height: 44,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: [
-                    FilterChip(
-                      avatar: const Icon(Icons.tune, size: 16),
-                      label: Text(_statusLabel ?? 'Status'),
-                      selected: _statusId != null,
-                      onSelected: (_) => _pickStatus(),
+    return RightsGate(
+      allows: (r) => r.canReadItemtype(widget.itemtype),
+      title: widget.itemtype,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.itemtype),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(104),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      hintText: 'Name, serial or asset tag…',
+                      prefixIcon: Icon(Icons.search),
+                      isDense: true,
+                      border: OutlineInputBorder(),
                     ),
-                    if (_offline)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: Chip(
-                          avatar: const Icon(Icons.cloud_off, size: 16),
-                          label: const Text('Cached'),
-                          backgroundColor: theme.colorScheme.surfaceContainer,
-                        ),
-                      ),
-                  ],
+                    onChanged: _onQueryChanged,
+                  ),
                 ),
-              ),
-            ],
+                SizedBox(
+                  height: 44,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    children: [
+                      FilterChip(
+                        avatar: const Icon(Icons.tune, size: 16),
+                        label: Text(_statusLabel ?? 'Status'),
+                        selected: _statusId != null,
+                        onSelected: (_) => _pickStatus(),
+                      ),
+                      if (_offline)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Chip(
+                            avatar: const Icon(Icons.cloud_off, size: 16),
+                            label: const Text('Cached'),
+                            backgroundColor: theme.colorScheme.surfaceContainer,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-      body: AccessibleRefresh(
-        onRefresh: _refresh,
-        child: items.isEmpty
-            ? ListView(
-                children: [
-                  const SizedBox(height: 120),
-                  Center(
-                    child: Text(
-                      'No ${widget.itemtype} records',
-                      style: TextStyle(color: theme.colorScheme.outline),
+        body: AccessibleRefresh(
+          onRefresh: _refresh,
+          child: items.isEmpty
+              ? ListView(
+                  children: [
+                    const SizedBox(height: 120),
+                    Center(
+                      child: Text(
+                        'No ${widget.itemtype} records',
+                        style: TextStyle(color: theme.colorScheme.outline),
+                      ),
                     ),
-                  ),
-                ],
-              )
-            : ListView.separated(
-                itemCount: items.length,
-                separatorBuilder: (_, _) => const Divider(height: 1),
-                itemBuilder: (context, i) => CatalogTile(item: items[i]),
-              ),
+                  ],
+                )
+              : ListView.separated(
+                  itemCount: items.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (context, i) => CatalogTile(item: items[i]),
+                ),
+        ),
       ),
     );
   }

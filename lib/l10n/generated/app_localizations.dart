@@ -1067,7 +1067,7 @@ abstract class AppLocalizations {
   /// No description provided for @majorAudienceCustomer.
   ///
   /// In en, this message translates to:
-  /// **'Customer'**
+  /// **'Public'**
   String get majorAudienceCustomer;
 
   /// No description provided for @majorUpdatePosted.
@@ -1367,7 +1367,7 @@ abstract class AppLocalizations {
   /// No description provided for @entitleNoContract.
   ///
   /// In en, this message translates to:
-  /// **'No contract covers this customer'**
+  /// **'No contract covers this entity'**
   String get entitleNoContract;
 
   /// No description provided for @entitleNoLabor.
@@ -1435,6 +1435,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The assistant needs a connection — it asks the model on your server, and nothing about it works offline.'**
   String get assistantOffline;
+
+  /// No description provided for @rightsUnavailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available to you'**
+  String get rightsUnavailableTitle;
+
+  /// No description provided for @rightsUnavailableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your GLPI profile doesn\'t include this. An administrator can grant it, or you can switch to another profile if you have one.'**
+  String get rightsUnavailableBody;
+
+  /// No description provided for @rightsReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only with your profile'**
+  String get rightsReadOnly;
 }
 
 class _AppLocalizationsDelegate

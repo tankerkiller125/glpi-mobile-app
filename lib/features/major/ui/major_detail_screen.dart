@@ -318,7 +318,7 @@ class _IncidentBody extends ConsumerWidget {
 }
 
 /// One comms update, labeled with its audience so internal notes are never
-/// mistaken for something a customer saw.
+/// mistaken for something the public saw.
 class _UpdateTile extends StatelessWidget {
   const _UpdateTile({required this.update});
 

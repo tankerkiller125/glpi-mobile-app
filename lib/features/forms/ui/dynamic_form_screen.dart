@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,9 +8,11 @@ import 'package:path/path.dart' as p;
 
 import '../../../core/api/dto/form_dto.dart';
 import '../../../core/api/dto/user_ref.dart';
+import '../../../core/api/itil_type.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/formatting.dart';
+import '../../../core/widgets/rights_gate.dart';
 import '../../ticket/ui/user_picker.dart';
 import '../form_conditions.dart';
 
@@ -221,36 +224,40 @@ class _DynamicFormScreenState extends ConsumerState<DynamicFormScreen> {
   Widget build(BuildContext context) {
     final async = ref.watch(formDefinitionProvider(widget.formId));
 
-    return Scaffold(
-      appBar: AppBar(title: Text(async.value?.name ?? 'New request')),
-      body: switch (async) {
-        AsyncData(:final value) => _buildForm(value),
-        AsyncError() => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Could not load this form. It may need a connection the '
-                  'first time.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  onPressed: () =>
-                      ref.invalidate(formDefinitionProvider(widget.formId)),
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
-                ),
-              ],
+    return RightsGate(
+      allows: (r) => r.canCreateItil(itilTicket),
+      title: 'New ticket',
+      child: Scaffold(
+        appBar: AppBar(title: Text(async.value?.name ?? 'New request')),
+        body: switch (async) {
+          AsyncData(:final value) => _buildForm(value),
+          AsyncError() => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Could not load this form. It may need a connection the '
+                    'first time.',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () =>
+                        ref.invalidate(formDefinitionProvider(widget.formId)),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        _ => const Center(
-          child: CircularProgressIndicator(semanticsLabel: 'Loading'),
-        ),
-      },
+          _ => const Center(
+            child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+          ),
+        },
+      ),
     );
   }
 

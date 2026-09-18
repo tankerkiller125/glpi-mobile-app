@@ -1,0 +1,51 @@
+{
+  "active_profile": {
+    "id": 1,
+    "interface": "helpdesk",
+    "name": "Self-Service",
+    "rights": {
+      "2fa_enforced": 0,
+      "changetemplates_id": 0,
+      "create_ticket_on_login": 0,
+      "entities": 0,
+      "followup": 5,
+      "helpdesk_hardware": 0,
+      "helpdesk_item_type": 0,
+      "id": 0,
+      "interface": 0,
+      "is_default": 0,
+      "knowbase": 2048,
+      "managed_domainrecordtypes": 0,
+      "name": 0,
+      "password_update": 1,
+      "personalization": 3,
+      "problemtemplates_id": 0,
+      "reminder_public": 1,
+      "reservation": 1024,
+      "rssfeed_public": 1,
+      "show_group_hardware": 0,
+      "task": 1,
+      "ticket": 5,
+      "ticket_status": 0,
+      "tickettemplates_id": 0,
+      "ticketvalidation": 0,
+      "use_mentions": 0
+    }
+  },
+  "friendly_name": "post-only",
+  "groups": [],
+  "name": "post-only",
+  "profiles": {
+    "1": {
+      "entities": {
+        "580": {
+          "id": 580,
+          "is_recursive": 0,
+          "name": "Northwind Logistics"
+        }
+      },
+      "name": "Self-Service"
+    }
+  },
+  "user_id": 3
+}

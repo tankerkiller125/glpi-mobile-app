@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/a11y/a11y.dart';
 import '../../../core/models/planning_event.dart';
+import '../../../core/models/rights.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/app_theme.dart';
 import 'planning_screen.dart';
@@ -27,7 +28,9 @@ class PlanningEventTile extends ConsumerWidget {
     final theme = Theme.of(context);
     final color = event.color(context.glpiColors);
 
-    final canReschedule = event.eventServerId != null;
+    final rights = ref.watch(rightsProvider).value ?? Rights.empty;
+    final canEdit = rights.canEditPlanningEvent(event.eventItemtype);
+    final canReschedule = event.eventServerId != null && canEdit;
     // One sentence per entry, and the times spelled out — "09:00–10:30" is read
     // as a single run of digits.
     final spoken = semanticSentence([
@@ -147,7 +150,7 @@ class PlanningEventTile extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      if (event.canToggleDone)
+                      if (event.canToggleDone && canEdit)
                         Checkbox(
                           value: event.isDone,
                           visualDensity: VisualDensity.compact,

@@ -6,7 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/a11y/a11y.dart';
+import '../../../core/api/itil_type.dart';
 import '../../../core/models/attachment.dart';
+import '../../../core/models/rights.dart';
 import '../../../core/models/ticket_detail.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/layout.dart';
@@ -45,6 +47,14 @@ class AttachmentsSection extends ConsumerWidget {
     final theme = Theme.of(context);
     final items =
         ref.watch(attachmentsProvider(ownerLocalId)).value ?? const [];
+    // An attachment is a Document in GLPI, filed against the object: it needs
+    // the document right as well as the right to write the object.
+    final rights = ref.watch(rightsProvider).value ?? Rights.empty;
+    final canAdd =
+        rights.canAddDocument &&
+        (itilTypes.contains(itemtype)
+            ? rights.canUpdateItil(itemtype)
+            : rights.canUpdateItemtype(itemtype));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,11 +62,13 @@ class AttachmentsSection extends ConsumerWidget {
         SectionHeading(
           'Attachments',
           count: items.isEmpty ? null : items.length,
-          trailing: TextButton.icon(
-            onPressed: () => _add(context, ref),
-            icon: const Icon(Icons.add_a_photo_outlined, size: 18),
-            label: const Text('Add'),
-          ),
+          trailing: canAdd
+              ? TextButton.icon(
+                  onPressed: () => _add(context, ref),
+                  icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+                  label: const Text('Add'),
+                )
+              : null,
         ),
         if (items.isEmpty)
           Padding(

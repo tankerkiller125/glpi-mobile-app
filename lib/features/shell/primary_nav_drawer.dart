@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_controller.dart';
 import '../../core/models/capabilities.dart';
+import '../../core/models/rights.dart';
 import '../../core/providers.dart';
 import '../../core/router/app_router.dart';
 import '../../core/sync/connectivity.dart';
@@ -32,6 +33,11 @@ class PrimaryNavDrawer extends ConsumerWidget {
     // Optional server-plugin modules only appear when the server offers them
     // (the last-known map keeps them stable offline).
     final caps = ref.watch(capabilitiesProvider).value ?? Capabilities.empty;
+    // Core GLPI modules follow the profile's rights, the same way GLPI builds
+    // its own sidebar: a row that would only ever open a 403 or an empty list
+    // is not shown at all. Unknown rights (first launch, nothing cached) hide
+    // rather than tease.
+    final rights = ref.watch(rightsProvider).value ?? Rights.empty;
 
     return Drawer(
       child: SafeArea(
@@ -159,54 +165,66 @@ class PrimaryNavDrawer extends ConsumerWidget {
                     selected: location.startsWith('/assistance'),
                     onTap: () => Navigator.pop(context),
                   ),
-                  _ModuleTile(
-                    icon: Icons.calendar_month_outlined,
-                    label: 'Planning',
-                    selected: location.startsWith(Routes.planning),
-                    onTap: () => _go(context, Routes.planning),
-                  ),
-                  _ModuleTile(
-                    icon: Icons.account_tree_outlined,
-                    label: 'Projects',
-                    selected: location.startsWith(Routes.projects),
-                    onTap: () => _go(context, Routes.projects),
-                  ),
-                  _ModuleTile(
-                    icon: Icons.menu_book_outlined,
-                    label: 'Knowledge base',
-                    selected: location.startsWith(Routes.kb),
-                    onTap: () => _go(context, Routes.kb),
-                  ),
-                  _ModuleTile(
-                    icon: Icons.sticky_note_2_outlined,
-                    label: 'Reminders',
-                    selected: location.startsWith(Routes.reminders),
-                    onTap: () => _go(context, Routes.reminders),
-                  ),
-                  _ModuleTile(
-                    icon: Icons.rss_feed_outlined,
-                    label: 'RSS feeds',
-                    selected: location.startsWith(Routes.rss),
-                    onTap: () => _go(context, Routes.rss),
-                  ),
-                  _ModuleTile(
-                    icon: Icons.event_available_outlined,
-                    label: 'Reservations',
-                    selected: location.startsWith(Routes.reservations),
-                    onTap: () => _go(context, Routes.reservations),
-                  ),
-                  _ModuleTile(
-                    icon: Icons.devices_other_outlined,
-                    label: 'Assets',
-                    selected: location.startsWith(Routes.assets),
-                    onTap: () => _go(context, Routes.assets),
-                  ),
-                  _ModuleTile(
-                    icon: Icons.business_center_outlined,
-                    label: 'Management',
-                    selected: location.startsWith(Routes.management),
-                    onTap: () => _go(context, Routes.management),
-                  ),
+                  if (rights.canViewPlanning)
+                    _ModuleTile(
+                      icon: Icons.calendar_month_outlined,
+                      label: 'Planning',
+                      selected: location.startsWith(Routes.planning),
+                      onTap: () => _go(context, Routes.planning),
+                    ),
+                  if (rights.canViewProjects)
+                    _ModuleTile(
+                      icon: Icons.account_tree_outlined,
+                      label: 'Projects',
+                      selected: location.startsWith(Routes.projects),
+                      onTap: () => _go(context, Routes.projects),
+                    ),
+                  if (rights.canViewKb)
+                    _ModuleTile(
+                      icon: Icons.menu_book_outlined,
+                      label: 'Knowledge base',
+                      selected: location.startsWith(Routes.kb),
+                      onTap: () => _go(context, Routes.kb),
+                    ),
+                  if (rights.canViewReminders)
+                    _ModuleTile(
+                      icon: Icons.sticky_note_2_outlined,
+                      label: 'Reminders',
+                      selected: location.startsWith(Routes.reminders),
+                      onTap: () => _go(context, Routes.reminders),
+                    ),
+                  if (rights.canViewRss)
+                    _ModuleTile(
+                      icon: Icons.rss_feed_outlined,
+                      label: 'RSS feeds',
+                      selected: location.startsWith(Routes.rss),
+                      onTap: () => _go(context, Routes.rss),
+                    ),
+                  if (rights.canViewReservations)
+                    _ModuleTile(
+                      icon: Icons.event_available_outlined,
+                      label: 'Reservations',
+                      selected: location.startsWith(Routes.reservations),
+                      onTap: () => _go(context, Routes.reservations),
+                    ),
+                  // The hubs list every itemtype the server offers, but a
+                  // profile usually reads only some of them — and none at all
+                  // is common for a helpdesk profile, which is when the row
+                  // itself goes.
+                  if (rights.canViewAnyOf(HubTypes.assets))
+                    _ModuleTile(
+                      icon: Icons.devices_other_outlined,
+                      label: 'Assets',
+                      selected: location.startsWith(Routes.assets),
+                      onTap: () => _go(context, Routes.assets),
+                    ),
+                  if (rights.canViewAnyOf(HubTypes.management))
+                    _ModuleTile(
+                      icon: Icons.business_center_outlined,
+                      label: 'Management',
+                      selected: location.startsWith(Routes.management),
+                      onTap: () => _go(context, Routes.management),
+                    ),
                 ],
               ),
             ),

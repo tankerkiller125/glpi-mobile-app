@@ -222,5 +222,8 @@
   "entitleLapsed": "{contract} ({model}) a expiré le {ended}",
   "entitleBlockHours": "{used} heures sur {pool} consommées",
   "entitleStale": "Réponse datant de {age}",
-  "assistantOffline": "L'assistant nécessite une connexion : il interroge le modèle sur votre serveur, et rien n'en fonctionne hors ligne."
+  "assistantOffline": "L'assistant nécessite une connexion : il interroge le modèle sur votre serveur, et rien n'en fonctionne hors ligne.",
+  "rightsUnavailableTitle": "Indisponible pour vous",
+  "rightsUnavailableBody": "Votre profil GLPI ne l'inclut pas. Un administrateur peut vous l'accorder, ou vous pouvez changer de profil si vous en avez un autre.",
+  "rightsReadOnly": "Lecture seule avec votre profil"
 }

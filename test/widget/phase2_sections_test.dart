@@ -8,6 +8,7 @@ import 'package:glpi_mobile/core/api/glpi_api.dart';
 import 'package:glpi_mobile/core/api/itil_type.dart';
 import 'package:glpi_mobile/core/auth/auth_controller.dart';
 import 'package:glpi_mobile/core/models/capabilities.dart';
+import 'package:glpi_mobile/core/models/rights.dart';
 import 'package:glpi_mobile/core/models/ticket_detail.dart';
 import 'package:glpi_mobile/core/providers.dart';
 import 'package:glpi_mobile/core/sync/connectivity.dart';
@@ -153,6 +154,17 @@ Widget _host({
     overrides: [
       authControllerProvider.overrideWith(_StubAuth.new),
       capabilitiesProvider.overrideWith((ref) async => caps),
+      // A technician-shaped profile: these tests are about the sections, not
+      // about rights gating (which has its own file), and the composer is
+      // hidden outright without the followup/task rights.
+      rightsProvider.overrideWith(
+        (ref) async => Rights.fromSessionJson(const {
+          'active_profile': {
+            'interface': 'central',
+            'rights': {'ticket': 429063, 'followup': 64535, 'task': 64535},
+          },
+        }),
+      ),
       glpiApiProvider.overrideWithValue(api),
       connectivityProvider.overrideWith((ref) => Stream.value(true)),
       // Always overridden so no test arms the real provider's cache timer.

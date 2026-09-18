@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/models/catalog_item.dart';
+import '../../../core/models/rights.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/widgets/accessible_refresh.dart';
+import '../../../core/widgets/rights_gate.dart';
 import 'catalog_scan_screen.dart';
 import 'catalog_search_delegate.dart';
 
@@ -25,60 +27,78 @@ class CatalogHubScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final types = ref.watch(itemtypesProvider(domain));
+    final rights = ref.watch(rightsProvider).value ?? Rights.empty;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_isAssets ? 'Assets' : 'Management'),
-        actions: [
-          IconButton(
-            tooltip: 'Search',
-            icon: const Icon(Icons.search),
-            onPressed: () => showSearch(
-              context: context,
-              delegate: CatalogSearchDelegate(domain: domain, ref: ref),
-            ),
-          ),
-          if (_isAssets)
+    return RightsGate(
+      allows: (r) =>
+          r.canViewAnyOf(_isAssets ? HubTypes.assets : HubTypes.management),
+      title: _isAssets ? 'Assets' : 'Management',
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_isAssets ? 'Assets' : 'Management'),
+          actions: [
             IconButton(
-              tooltip: 'Scan barcode',
-              icon: const Icon(Icons.qr_code_scanner),
-              onPressed: () => Navigator.of(context, rootNavigator: true).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const CatalogScanScreen(),
-                ),
+              tooltip: 'Search',
+              icon: const Icon(Icons.search),
+              onPressed: () => showSearch(
+                context: context,
+                delegate: CatalogSearchDelegate(domain: domain, ref: ref),
               ),
             ),
-        ],
-      ),
-      body: AccessibleRefresh(
-        onRefresh: () async => ref.invalidate(itemtypesProvider(domain)),
-        child: switch (types) {
-          AsyncData(:final value) when value.isEmpty => _empty(
-            context,
-            'No itemtypes available',
-          ),
-          AsyncData(:final value) => GridView.builder(
-            padding: const EdgeInsets.all(12),
-            // Sized by extent, not a fixed count: two columns on a phone,
-            // more as the window grows, without a breakpoint table.
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 260,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1.35,
+            if (_isAssets)
+              IconButton(
+                tooltip: 'Scan barcode',
+                icon: const Icon(Icons.qr_code_scanner),
+                onPressed: () =>
+                    Navigator.of(context, rootNavigator: true).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const CatalogScanScreen(),
+                      ),
+                    ),
+              ),
+          ],
+        ),
+        body: AccessibleRefresh(
+          onRefresh: () async => ref.invalidate(itemtypesProvider(domain)),
+          child: switch (types) {
+            // The server lists every itemtype it has, not the ones this
+            // profile may read — `/Assets` answers identically for a
+            // super-admin and a self-service user — so the filtering is ours.
+            AsyncData(:final value)
+                when value
+                    .where((t) => rights.canReadItemtype(t.itemtype))
+                    .isEmpty =>
+              _empty(context, 'No itemtypes available'),
+            AsyncData(value: final all) => Builder(
+              builder: (context) {
+                final value = all
+                    .where((t) => rights.canReadItemtype(t.itemtype))
+                    .toList();
+                return GridView.builder(
+                  padding: const EdgeInsets.all(12),
+                  // Sized by extent, not a fixed count: two columns on a phone,
+                  // more as the window grows, without a breakpoint table.
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 260,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.35,
+                  ),
+                  itemCount: value.length,
+                  itemBuilder: (context, i) => _TypeCard(
+                    domain: domain,
+                    itemtype: value[i].itemtype,
+                    label: value[i].name,
+                  ),
+                );
+              },
             ),
-            itemCount: value.length,
-            itemBuilder: (context, i) => _TypeCard(
-              domain: domain,
-              itemtype: value[i].itemtype,
-              label: value[i].name,
+            AsyncError() => _empty(context, 'Itemtypes need a connection'),
+            _ => const Center(
+              child: CircularProgressIndicator(semanticsLabel: 'Loading'),
             ),
-          ),
-          AsyncError() => _empty(context, 'Itemtypes need a connection'),
-          _ => const Center(
-            child: CircularProgressIndicator(semanticsLabel: 'Loading'),
-          ),
-        },
+          },
+        ),
       ),
     );
   }

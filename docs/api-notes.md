@@ -28,6 +28,27 @@ local drift queries over the cached `team` arrays. List responses DO embed the f
 - `GET /api.php/v2.3/session` **does**: `groups: [...]`, plus `profiles` map,
   `active_profile`, `active_entities`. No legacy-API fallback needed.
 
+## Profile rights come with the session (no extra endpoint)
+- `active_profile.rights` is the full `$_SESSION['glpiactiveprofile']` bitmask map —
+  160 keys for a central profile, 26 for a helpdesk one, plugin rights included
+  (`plugin_glpisignal_alert`, …). Verified against the stock Super-Admin, Technician,
+  Observer and Self-Service profiles; those four payloads are checked in as
+  `test/fixtures/session*.json`.
+- **A key that is absent means the right is not held.** `Session::haveRight()` returns
+  false for an unknown module, and helpdesk profiles simply omit most keys.
+- The `GLPI-Profile` request header selects which profile the session runs as, and the
+  rights reported change with it (verified: the same user reading 429063 for `ticket`
+  as Technician and 168989 as Observer). `active_profile.interface` is `central` or
+  `helpdesk`.
+- Values are ints, but a few neighbouring keys in the same map are *not* rights —
+  `ticket_status`/`change_status`/`problem_status` are JSON strings, `comment` is text.
+  Read the map defensively.
+- **Nothing else is rights-filtered.** `GET /Assets` and `GET /Management` return the
+  same itemtype list for a super-admin and for a self-service user; only the per-type
+  list request 403s (verified: Technician → `/Management/Contract` 403, because the
+  stock profile holds `contract` 96 = READNOTE|UPDATENOTE with no READ). Any hub the
+  app draws from those lists has to filter by rights itself.
+
 ## Timeline
 - `GET /Assistance/Ticket/{id}/Timeline` returns merged entries `{type, item}` with type
   strings `Followup`, `Task`, `Solution`, `Validation`, `Document` — NOT class names like

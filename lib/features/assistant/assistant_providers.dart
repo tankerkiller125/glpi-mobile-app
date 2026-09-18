@@ -9,7 +9,7 @@ import '../../core/providers.dart';
 /// What glpi-ai will answer in the entity the technician is working in.
 ///
 /// Separate from the capability map on purpose: capabilities are computed once
-/// per session, and the entity gate — which decides whether a customer's data
+/// per session, and the entity gate — which decides whether an entity's data
 /// may reach a provider at all — moves when they switch entity. Failures read
 /// as "off" rather than as an error: an unreachable server and a switched-off
 /// feature look the same from a phone, and both mean "do not offer this".

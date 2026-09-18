@@ -6,6 +6,7 @@ import '../../../core/api/dto/ai_dto.dart';
 import '../../../core/api/errors.dart';
 import '../../../core/api/itil_type.dart';
 import '../../../core/models/capabilities.dart';
+import '../../../core/models/rights.dart';
 import '../../../core/models/ticket_detail.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/html_text.dart';
@@ -90,7 +91,28 @@ class _ComposerState extends ConsumerState<Composer> {
         ref.read(pendingComposerTextProvider.notifier).set(null);
       }
     });
-    return _build(context);
+
+    // GLPI splits "add a followup" and "add a task" into separate rights, and
+    // a read-only profile (an observer, say) holds neither — then there is
+    // nothing to compose and the bar goes entirely, rather than offering a
+    // send button that will 403.
+    final rights = ref.watch(rightsProvider).value ?? Rights.empty;
+    final canReply = rights.canAddFollowup;
+    final canTask = rights.canAddTask;
+    if (!canReply && !canTask) return const SizedBox.shrink();
+    // With only one of the two, the mode switch is noise — and the mode has
+    // to be the one that is allowed, whatever a stopped timer or a staged
+    // reply put there.
+    if (!canReply && _mode != _Mode.task) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _mode = _Mode.task);
+      });
+    } else if (!canTask && _mode != _Mode.reply) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _mode = _Mode.reply);
+      });
+    }
+    return _build(context, canReply: canReply, canTask: canTask);
   }
 
   /// Open the full editor for anything longer than a one-liner, seeded with
@@ -210,7 +232,11 @@ class _ComposerState extends ConsumerState<Composer> {
     return caps.has(Cap.ai, Cap.aiReplyReview);
   }
 
-  Widget _build(BuildContext context) {
+  Widget _build(
+    BuildContext context, {
+    required bool canReply,
+    required bool canTask,
+  }) {
     final l = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Material(
@@ -228,27 +254,31 @@ class _ComposerState extends ConsumerState<Composer> {
                   // Scale down rather than overflow: mid fold/unfold the
                   // detail pane can be laid out a frame at a degenerate width,
                   // and a hard overflow paints stripes over the composer.
-                  Flexible(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: SegmentedButton<_Mode>(
-                        style: const ButtonStyle(
-                          visualDensity: VisualDensity.compact,
-                        ),
-                        segments: const [
-                          ButtonSegment(
-                            value: _Mode.reply,
-                            label: Text('Reply'),
+                  if (canReply && canTask)
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: SegmentedButton<_Mode>(
+                          style: const ButtonStyle(
+                            visualDensity: VisualDensity.compact,
                           ),
-                          ButtonSegment(value: _Mode.task, label: Text('Task')),
-                        ],
-                        selected: {_mode},
-                        onSelectionChanged: (s) =>
-                            setState(() => _mode = s.first),
+                          segments: const [
+                            ButtonSegment(
+                              value: _Mode.reply,
+                              label: Text('Reply'),
+                            ),
+                            ButtonSegment(
+                              value: _Mode.task,
+                              label: Text('Task'),
+                            ),
+                          ],
+                          selected: {_mode},
+                          onSelectionChanged: (s) =>
+                              setState(() => _mode = s.first),
+                        ),
                       ),
                     ),
-                  ),
                   const Spacer(),
                   // A toggle, so the reader says "Private note, on/off" rather
                   // than leaving the current state to the icon shape.

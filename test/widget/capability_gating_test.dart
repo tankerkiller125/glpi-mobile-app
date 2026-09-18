@@ -5,6 +5,7 @@ import 'package:glpi_mobile/core/api/dto/signal_dto.dart';
 import 'package:glpi_mobile/core/api/glpi_api.dart';
 import 'package:glpi_mobile/core/auth/auth_controller.dart';
 import 'package:glpi_mobile/core/models/capabilities.dart';
+import 'package:glpi_mobile/core/models/rights.dart';
 import 'package:glpi_mobile/core/providers.dart';
 import 'package:glpi_mobile/core/sync/connectivity.dart';
 import 'package:glpi_mobile/core/sync/sync_status.dart';
@@ -62,6 +63,27 @@ final _bothPlugins = Capabilities.fromJson(const {
   },
 });
 
+/// A profile that may see every built-in module, so these tests stay about
+/// capabilities. Rights gating has its own file.
+final _allRights = Rights.fromSessionJson(const {
+  'active_profile': {
+    'interface': 'central',
+    'rights': {
+      'ticket': 523295,
+      'change': 132223,
+      'problem': 1151,
+      'planning': 3073,
+      'project': 1150,
+      'knowbase': 15383,
+      'reminder_public': 159,
+      'rssfeed_public': 159,
+      'reservation': 1055,
+      'computer': 4095,
+      'contract': 255,
+    },
+  },
+});
+
 Widget _host({required Widget home, required Capabilities caps, GlpiApi? api}) {
   final router = GoRouter(
     routes: [
@@ -83,6 +105,7 @@ Widget _host({required Widget home, required Capabilities caps, GlpiApi? api}) {
     overrides: [
       authControllerProvider.overrideWith(_StubAuth.new),
       capabilitiesProvider.overrideWith((ref) async => caps),
+      rightsProvider.overrideWith((ref) async => _allRights),
       glpiApiProvider.overrideWithValue(api),
       syncStatusProvider.overrideWith(
         (ref) => Stream.value(const SyncStatus()),

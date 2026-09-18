@@ -9,6 +9,7 @@ import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/formatting.dart';
 import '../../../core/utils/layout.dart';
+import '../../../core/widgets/rights_gate.dart';
 
 /// Knowledge base browser: server search with a local-cache fallback, FAQ and
 /// category filters, plus an offline shelf of everything already read.
@@ -69,77 +70,81 @@ class _KbScreenState extends ConsumerState<KbScreen> {
         .where((c) => c.id == _categoryId)
         .firstOrNull;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Knowledge base'),
-        bottom: PreferredSize(
-          // The search field and the chip row both grow with the user's font
-          // scale; a fixed 108 clips them into a striped overflow at 200%.
-          preferredSize: Size.fromHeight(
-            MediaQuery.textScalerOf(context).scale(108).clamp(108.0, 220.0),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Column(
-              children: [
-                TextField(
-                  controller: _search,
-                  autofocus: widget.initialQuery != null,
-                  decoration: InputDecoration(
-                    hintText: 'Search articles…',
-                    prefixIcon: const Icon(Icons.search),
-                    isDense: true,
-                    border: const OutlineInputBorder(),
-                    suffixIcon: _search.text.isEmpty
-                        ? null
-                        : IconButton(
-                            tooltip: 'Clear search',
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _search.clear();
-                              setState(() => _query = '');
-                            },
-                          ),
+    return RightsGate(
+      allows: (r) => r.canViewKb,
+      title: 'Knowledge base',
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Knowledge base'),
+          bottom: PreferredSize(
+            // The search field and the chip row both grow with the user's font
+            // scale; a fixed 108 clips them into a striped overflow at 200%.
+            preferredSize: Size.fromHeight(
+              MediaQuery.textScalerOf(context).scale(108).clamp(108.0, 220.0),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _search,
+                    autofocus: widget.initialQuery != null,
+                    decoration: InputDecoration(
+                      hintText: 'Search articles…',
+                      prefixIcon: const Icon(Icons.search),
+                      isDense: true,
+                      border: const OutlineInputBorder(),
+                      suffixIcon: _search.text.isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: 'Clear search',
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _search.clear();
+                                setState(() => _query = '');
+                              },
+                            ),
+                    ),
+                    onChanged: _onQueryChanged,
                   ),
-                  onChanged: _onQueryChanged,
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: MediaQuery.textScalerOf(
-                    context,
-                  ).scale(34).clamp(34.0, 80.0),
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      FilterChip(
-                        label: const Text('FAQ'),
-                        selected: _faqOnly,
-                        onSelected: (v) => setState(() => _faqOnly = v),
-                      ),
-                      const SizedBox(width: 8),
-                      FilterChip(
-                        label: Text(
-                          selectedCategory?.completename ?? 'Category',
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: MediaQuery.textScalerOf(
+                      context,
+                    ).scale(34).clamp(34.0, 80.0),
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        FilterChip(
+                          label: const Text('FAQ'),
+                          selected: _faqOnly,
+                          onSelected: (v) => setState(() => _faqOnly = v),
                         ),
-                        selected: _categoryId != null,
-                        onSelected: (_) => _pickCategory(categories),
-                      ),
-                      const SizedBox(width: 8),
-                      FilterChip(
-                        avatar: const Icon(Icons.download_done, size: 16),
-                        label: const Text('Saved'),
-                        selected: _offlineShelf,
-                        onSelected: (v) => setState(() => _offlineShelf = v),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        FilterChip(
+                          label: Text(
+                            selectedCategory?.completename ?? 'Category',
+                          ),
+                          selected: _categoryId != null,
+                          onSelected: (_) => _pickCategory(categories),
+                        ),
+                        const SizedBox(width: 8),
+                        FilterChip(
+                          avatar: const Icon(Icons.download_done, size: 16),
+                          label: const Text('Saved'),
+                          selected: _offlineShelf,
+                          onSelected: (v) => setState(() => _offlineShelf = v),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
+        body: _offlineShelf ? _buildCached() : _buildSearch(theme),
       ),
-      body: _offlineShelf ? _buildCached() : _buildSearch(theme),
     );
   }
 

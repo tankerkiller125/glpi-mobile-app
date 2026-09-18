@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/a11y/a11y.dart';
 import '../../../core/models/project.dart';
+import '../../../core/models/rights.dart';
 import '../../../core/providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatting.dart';
@@ -77,6 +78,7 @@ class _Body extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final rights = ref.watch(rightsProvider).value ?? Rights.empty;
     final theme = Theme.of(context);
     final colors = context.glpiColors;
     final tasks =
@@ -189,12 +191,14 @@ class _Body extends ConsumerWidget {
               SectionHeading(
                 'Tasks',
                 count: tasks.isEmpty ? null : tasks.length,
-                trailing: TextButton.icon(
-                  onPressed: () =>
-                      ProjectTaskSheet.show(context, project: project),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add task'),
-                ),
+                trailing: rights.canCreateProjectTask
+                    ? TextButton.icon(
+                        onPressed: () =>
+                            ProjectTaskSheet.show(context, project: project),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Add task'),
+                      )
+                    : null,
               ),
             ],
           ),
@@ -210,7 +214,14 @@ class _Body extends ConsumerWidget {
             ),
           )
         else
-          for (final t in tasks) _TaskRow(project: project, task: t),
+          for (final t in tasks)
+            _TaskRow(
+              project: project,
+              task: t,
+              // The row's only action is the edit sheet, so without the right
+              // it stays a row rather than a button that refuses to save.
+              canEdit: rights.canUpdateProjectTask,
+            ),
         const SizedBox(height: 24),
       ],
     );
@@ -218,10 +229,17 @@ class _Body extends ConsumerWidget {
 }
 
 class _TaskRow extends StatelessWidget {
-  const _TaskRow({required this.project, required this.task});
+  const _TaskRow({
+    required this.project,
+    required this.task,
+    required this.canEdit,
+  });
 
   final Project project;
   final ProjectTask task;
+
+  /// Whether tapping opens the edit sheet.
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -252,14 +270,17 @@ class _TaskRow extends StatelessWidget {
       opacity: task.pending ? 0.55 : 1,
       child: Semantics(
         container: true,
-        button: true,
+        button: canEdit,
         label: spoken,
-        onTap: () =>
-            ProjectTaskSheet.show(context, project: project, task: task),
+        onTap: canEdit
+            ? () => ProjectTaskSheet.show(context, project: project, task: task)
+            : null,
         excludeSemantics: true,
         child: InkWell(
-          onTap: () =>
-              ProjectTaskSheet.show(context, project: project, task: task),
+          onTap: canEdit
+              ? () =>
+                    ProjectTaskSheet.show(context, project: project, task: task)
+              : null,
           child: Padding(
             // Children indent one level per depth.
             padding: EdgeInsets.fromLTRB(16.0 + task.depth * 16, 8, 16, 8),

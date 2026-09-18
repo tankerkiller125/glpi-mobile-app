@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/models/planning_event.dart';
+import '../../../core/models/rights.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/formatting.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/accessible_refresh.dart';
+import '../../../core/widgets/rights_gate.dart';
 import 'event_editor_sheet.dart';
 import 'planning_event_tile.dart';
 import 'reschedule_sheet.dart';
@@ -48,58 +50,68 @@ class _PlanningScreenState extends ConsumerState<PlanningScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
     }
     final day = ref.watch(planningDayProvider);
+    final rights = ref.watch(rightsProvider).value ?? Rights.empty;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Planning'),
-        actions: [
-          IconButton(
-            tooltip: 'Today',
-            icon: const Icon(Icons.today_outlined),
-            onPressed: () {
-              final now = DateTime.now();
-              ref.read(planningDayProvider.notifier).set(now);
-              _refresh();
-            },
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: SegmentedButton<bool>(
-              segments: const [
-                ButtonSegment(value: false, label: Text('Day')),
-                ButtonSegment(value: true, label: Text('Week')),
-              ],
-              selected: {_weekView},
-              onSelectionChanged: (s) => setState(() => _weekView = s.first),
+    return RightsGate(
+      allows: (r) => r.canViewPlanning,
+      title: 'Planning',
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Planning'),
+          actions: [
+            IconButton(
+              tooltip: 'Today',
+              icon: const Icon(Icons.today_outlined),
+              onPressed: () {
+                final now = DateTime.now();
+                ref.read(planningDayProvider.notifier).set(now);
+                _refresh();
+              },
+            ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(48),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: false, label: Text('Day')),
+                  ButtonSegment(value: true, label: Text('Week')),
+                ],
+                selected: {_weekView},
+                onSelectionChanged: (s) => setState(() => _weekView = s.first),
+              ),
             ),
           ),
         ),
-      ),
-      body: Column(
-        children: [
-          _DateStrip(
-            selected: day,
-            onSelect: (d) {
-              ref.read(planningDayProvider.notifier).set(d);
-              _refresh();
-            },
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: AccessibleRefresh(
-              onRefresh: _refresh,
-              child: _weekView ? const _WeekAgenda() : const _DayList(),
+        body: Column(
+          children: [
+            _DateStrip(
+              selected: day,
+              onSelect: (d) {
+                ref.read(planningDayProvider.notifier).set(d);
+                _refresh();
+              },
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _create(context),
-        tooltip: 'Add to planning',
-        child: const Icon(Icons.add),
+            const Divider(height: 1),
+            Expanded(
+              child: AccessibleRefresh(
+                onRefresh: _refresh,
+                child: _weekView ? const _WeekAgenda() : const _DayList(),
+              ),
+            ),
+          ],
+        ),
+        // Everything this button can add is a PlanningExternalEvent; a
+        // read-only planning profile (the common technician case) gets the
+        // calendar without it.
+        floatingActionButton: rights.canCreatePlanningEvent
+            ? FloatingActionButton(
+                onPressed: () => _create(context),
+                tooltip: 'Add to planning',
+                child: const Icon(Icons.add),
+              )
+            : null,
       ),
     );
   }

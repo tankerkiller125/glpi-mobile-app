@@ -8,6 +8,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **The app now shows only what your GLPI profile allows.** Rights ride along
+  with the session (`active_profile.rights`, the bitmask map GLPI builds its own
+  menus from), are re-read whenever the profile or entity changes, and are
+  cached so gating keeps working offline; anything unknown is treated as *not
+  allowed* rather than shown and refused. The drawer lists only the modules the
+  profile can open, the Assets and Management hubs list only the itemtypes it
+  may read (GLPI's `/Assets` list is identical for every user, so the filtering
+  is ours), and the ticket/change/problem switcher offers the ones it holds —
+  moving itself off a module whose right has gone. Inside a ticket the same rule
+  runs per action: reply, task, take (GLPI's *Associate myself*, and only while
+  the ticket is unassigned), assignee field, field edits, solution, approval
+  request, links, attachments. Answering an approval stays gated on being the
+  approver, which is what GLPI itself checks. A screen reached anyway — a push
+  deep link, a restored route — says so plainly instead of failing with a 403.
+
 - **New request is the service catalog, arranged the way the instance arranged
   it** (needs the companion plugin's `/catalog` route). Categories, one screen
   per level so Back is the breadcrumb, and search across every category. The
@@ -82,7 +97,17 @@ All notable changes to this project are documented here. The format follows
   including Flutter's tap-target, labelled-tap-target and text-contrast
   guidelines in both themes.
 
+### Changed
+
+- **Application id is now `com.bijstaan.glpi`** (was `com.tankerkiller125.glpi`)
+  on both platforms, along with the Kotlin package, the iOS bundle ids and the
+  `…/push` method channel, as part of the move to Bijstaan. Anyone running FCM
+  must register a new Android app under the new package name — a token minted
+  for the old one is not deliverable to the new app. The signing key is
+  unchanged; an installed build will not upgrade in place.
+
 ### Fixed
+
 
 - **A bottom sheet could put its drag handle behind the status bar**, where
   pulling down opens the notification shade instead of closing the sheet —
@@ -101,7 +126,7 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
-- **Application id is now `com.tankerkiller125.glpi`** (was `tech.norsewave.glpi`)
+- **Application id is now `com.tankerkiller125.glpi`** (was the original id)
   on both platforms, along with the Kotlin package, the iOS bundle ids and the
   `…/push` method channel. Anyone running FCM must register a new Android app
   under the new package name — a token minted for the old one is not deliverable
@@ -131,7 +156,7 @@ All notable changes to this project are documented here. The format follows
 ## [0.1.0] — 2026-08-08
 
 First public release. Requires GLPI 11.0+ and the
-[`glpimobile`](https://github.com/tankerkiller125/glpi-mobile-plugin) plugin.
+[`glpimobile`](https://github.com/bijstaan/glpi-mobile-plugin) plugin.
 
 ### Added
 
@@ -175,5 +200,5 @@ First public release. Requires GLPI 11.0+ and the
 - Release builds are debug-signed until `android/key.properties` is supplied.
 - No independent security review; no production deployment at scale.
 
-[Unreleased]: https://github.com/tankerkiller125/glpi-mobile-app/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/tankerkiller125/glpi-mobile-app/releases/tag/v0.1.0
+[Unreleased]: https://github.com/bijstaan/glpi-mobile-app/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/bijstaan/glpi-mobile-app/releases/tag/v0.1.0

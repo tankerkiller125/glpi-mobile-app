@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/api/itil_type.dart';
+import '../../../core/models/rights.dart';
 import '../../../core/models/ticket_list_item.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
@@ -44,6 +46,8 @@ class ScopeListView extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     final async = ref.watch(scopedQueueProvider(scope));
     final twoPane = windowSizeOf(context).hasTwoPanes;
+    final canCreate = (ref.watch(rightsProvider).value ?? Rights.empty)
+        .canCreateItil(itilTicket);
 
     Future<void> refresh() async {
       final repo = ref.read(ticketRepositoryProvider);
@@ -98,20 +102,21 @@ class ScopeListView extends ConsumerWidget {
       start: Stack(
         children: [
           Positioned.fill(child: list),
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: FloatingActionButton(
-              // Per-scope: the shell keeps every branch (Mine/Groups/
-              // Unassigned) mounted, so a shared tag means three live Heroes
-              // with the same identity and a framework assertion on every
-              // route push while the two-pane layout is up.
-              heroTag: 'newTicketPane-${scope.name}',
-              onPressed: () => context.push(Routes.catalog),
-              tooltip: 'New ticket',
-              child: const Icon(Icons.add),
+          if (canCreate)
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: FloatingActionButton(
+                // Per-scope: the shell keeps every branch (Mine/Groups/
+                // Unassigned) mounted, so a shared tag means three live Heroes
+                // with the same identity and a framework assertion on every
+                // route push while the two-pane layout is up.
+                heroTag: 'newTicketPane-${scope.name}',
+                onPressed: () => context.push(Routes.catalog),
+                tooltip: 'New ticket',
+                child: const Icon(Icons.add),
+              ),
             ),
-          ),
         ],
       ),
       end: selected == null

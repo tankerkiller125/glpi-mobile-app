@@ -19,7 +19,7 @@ String _stringOf(Object? v) => v == null ? '' : '$v';
 ///
 /// Distinct from the capability map, and deliberately: capabilities are
 /// computed once per session, and the entity gate — which decides whether this
-/// customer's data may reach a provider at all — moves when the technician
+/// entity's data may reach a provider at all — moves when the technician
 /// switches entity. This is the answer for the entity the request was made in.
 class AiStatusDto {
   const AiStatusDto({

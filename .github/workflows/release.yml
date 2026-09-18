@@ -154,7 +154,7 @@ jobs:
       # IPA so a release still ships something for iOS.
       #   APPLE_CERTIFICATE_BASE64      base64 of a distribution .p12
       #   APPLE_CERTIFICATE_PASSWORD    its export password
-      #   APPLE_PROVISIONING_PROFILE_BASE64  base64 .mobileprovision for com.tankerkiller125.glpi
+      #   APPLE_PROVISIONING_PROFILE_BASE64  base64 .mobileprovision for com.bijstaan.glpi
       #   APPLE_TEAM_ID                 10-character team id
       # Optional repository variables: APPLE_EXPORT_METHOD (default ad-hoc,
       # which Xcode 16+ also spells "release-testing"; an app-store IPA cannot
@@ -165,7 +165,7 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       APPLE_EXPORT_METHOD: ${{ vars.APPLE_EXPORT_METHOD || 'ad-hoc' }}
       APPLE_CODE_SIGN_IDENTITY: ${{ vars.APPLE_CODE_SIGN_IDENTITY || 'Apple Distribution' }}
-      BUNDLE_ID: com.tankerkiller125.glpi
+      BUNDLE_ID: com.bijstaan.glpi
     steps:
       - uses: actions/checkout@v7
 
@@ -321,6 +321,6 @@ jobs:
             with their own Apple developer account.
 
             The matching GLPI plugin release is at
-            https://github.com/tankerkiller125/glpi-mobile-plugin/releases
+            https://github.com/bijstaan/glpi-mobile-plugin/releases
 
             ---

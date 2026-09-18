@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/a11y/contrast.dart';
 import '../../../core/api/itil_type.dart';
+import '../../../core/models/rights.dart';
 import '../../../core/models/ticket_detail.dart';
 import '../../../core/models/timeline_entry.dart';
 import '../../../core/providers.dart';
@@ -99,6 +100,7 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
     // so hide the redundant app-bar start button.
     final timerRunningHere =
         ref.watch(activeTimerProvider).value?.ticketLocalId == widget.localId;
+    final rights = ref.watch(rightsProvider).value ?? Rights.empty;
     final pending =
         ref.watch(ticketPendingCountProvider(widget.localId)).value ?? 0;
 
@@ -122,55 +124,67 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
                     : '${itilLabel(detail.itemtype)} #${detail.serverId}'),
         ),
         actions: [
-          if (detail?.serverId != null && !timerRunningHere)
+          // The timer's whole point is to file the elapsed minutes as a task,
+          // so it follows the task right.
+          if (detail?.serverId != null &&
+              !timerRunningHere &&
+              rights.canAddTask)
             IconButton(
               tooltip: 'Start timer',
               icon: const Icon(Icons.timer_outlined),
               onPressed: () => _startTimer(detail!),
             ),
-          if (detail != null)
+          // Every entry here writes something, each under its own GLPI right;
+          // with none of them held the menu itself is gone.
+          if (detail != null && _menuActions(rights, detail).isNotEmpty)
             PopupMenuButton<String>(
               tooltip: 'More actions',
               onSelected: (v) => _onAction(v, detail),
-              itemBuilder: (context) => [
-                if (!_isAssignedToMe(detail))
-                  const PopupMenuItem(
-                    value: 'assign',
-                    child: ListTile(
-                      leading: Icon(Icons.person_add_alt),
-                      title: Text('Assign to me'),
+              itemBuilder: (context) {
+                final allowed = _menuActions(rights, detail);
+                return [
+                  if (allowed.contains('assign') && !_isAssignedToMe(detail))
+                    const PopupMenuItem(
+                      value: 'assign',
+                      child: ListTile(
+                        leading: Icon(Icons.person_add_alt),
+                        title: Text('Assign to me'),
+                      ),
                     ),
-                  ),
-                const PopupMenuItem(
-                  value: 'status',
-                  child: ListTile(
-                    leading: Icon(Icons.flag_outlined),
-                    title: Text('Change status'),
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'solution',
-                  child: ListTile(
-                    leading: Icon(Icons.check_circle_outline),
-                    title: Text('Add solution'),
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'kb',
-                  child: ListTile(
-                    leading: Icon(Icons.menu_book_outlined),
-                    title: Text('Search knowledge base'),
-                  ),
-                ),
-                if (itilSupportsValidation(detail.itemtype))
-                  const PopupMenuItem(
-                    value: 'approval',
-                    child: ListTile(
-                      leading: Icon(Icons.how_to_reg_outlined),
-                      title: Text('Request approval'),
+                  if (allowed.contains('status'))
+                    const PopupMenuItem(
+                      value: 'status',
+                      child: ListTile(
+                        leading: Icon(Icons.flag_outlined),
+                        title: Text('Change status'),
+                      ),
                     ),
-                  ),
-              ],
+                  if (allowed.contains('solution'))
+                    const PopupMenuItem(
+                      value: 'solution',
+                      child: ListTile(
+                        leading: Icon(Icons.check_circle_outline),
+                        title: Text('Add solution'),
+                      ),
+                    ),
+                  if (allowed.contains('kb'))
+                    const PopupMenuItem(
+                      value: 'kb',
+                      child: ListTile(
+                        leading: Icon(Icons.menu_book_outlined),
+                        title: Text('Search knowledge base'),
+                      ),
+                    ),
+                  if (allowed.contains('approval'))
+                    const PopupMenuItem(
+                      value: 'approval',
+                      child: ListTile(
+                        leading: Icon(Icons.how_to_reg_outlined),
+                        title: Text('Request approval'),
+                      ),
+                    ),
+                ];
+              },
             ),
         ],
       ),
@@ -199,6 +213,25 @@ class _TicketDetailScreenState extends ConsumerState<TicketDetailScreen> {
       },
     );
   }
+
+  /// Which of the app-bar menu's actions this profile may actually perform.
+  /// Each maps to the GLPI right the write itself needs: taking the object
+  /// (`Ticket::canAssignToMe()` — steal, or own while it is unassigned),
+  /// editing it, writing a solution, reading the knowledge base, or requesting
+  /// an approval.
+  static Set<String> _menuActions(Rights rights, TicketDetail detail) => {
+    if (rights.canTakeItil(
+      detail.itemtype,
+      alreadyAssigned: detail.byRole('assigned').isNotEmpty,
+    ))
+      'assign',
+    if (rights.canUpdateItil(detail.itemtype)) 'status',
+    if (rights.canAddSolution(detail.itemtype)) 'solution',
+    if (rights.canViewKb) 'kb',
+    if (itilSupportsValidation(detail.itemtype) &&
+        rights.canRequestApproval(detail.itemtype))
+      'approval',
+  };
 
   bool _isAssignedToMe(TicketDetail detail) {
     final actions = ref.read(ticketActionsProvider);
@@ -295,6 +328,13 @@ class _DetailBody extends ConsumerWidget {
     final theme = Theme.of(context);
     final timeline = ref.watch(timelineProvider(ticketLocalId));
     final colors = context.glpiColors;
+    final rights = ref.watch(rightsProvider).value ?? Rights.empty;
+    // Editing the object's own fields is UPDATE; changing who it is assigned
+    // to is the assign right on a ticket. Without them the rows stay — a
+    // technician still needs to read the category — they just stop being
+    // buttons that lead to a 403.
+    final canEdit = rights.canUpdateItil(detail.itemtype);
+    final canAssign = rights.canAssignItil(detail.itemtype);
 
     return ListView(
       children: [
@@ -322,7 +362,7 @@ class _DetailBody extends ConsumerWidget {
                       detail.status,
                       itemtype: detail.itemtype,
                     ),
-                    onTap: () => _editStatus(context, ref),
+                    onTap: canEdit ? () => _editStatus(context, ref) : null,
                   ),
                   if (itilHasRequestType(detail.itemtype))
                     _TicketChip(
@@ -331,7 +371,7 @@ class _DetailBody extends ConsumerWidget {
                           ? Icons.error_outline
                           : Icons.help_outline,
                       label: typeLabel(detail.type),
-                      onTap: () => _editType(context, ref),
+                      onTap: canEdit ? () => _editType(context, ref) : null,
                     ),
                 ],
               ),
@@ -354,37 +394,49 @@ class _DetailBody extends ConsumerWidget {
               // Editable detail fields.
               _RequesterTile(
                 detail: detail,
-                onAdd: () => _addActor(context, ref, 'requester'),
-                onRemove: (a) => _actions(ref)?.removeActor(detail, a),
+                onAdd: canEdit
+                    ? () => _addActor(context, ref, 'requester')
+                    : null,
+                onRemove: canEdit
+                    ? (a) => _actions(ref)?.removeActor(detail, a)
+                    : null,
               ),
               _AssignedTile(
                 detail: detail,
-                onAdd: () => _addActor(context, ref, 'assigned'),
-                onRemove: (a) => _actions(ref)?.removeActor(detail, a),
+                onAdd: canAssign
+                    ? () => _addActor(context, ref, 'assigned')
+                    : null,
+                onRemove: canAssign
+                    ? (a) => _actions(ref)?.removeActor(detail, a)
+                    : null,
               ),
               _ObserverTile(
                 detail: detail,
-                onAdd: () => _addActor(context, ref, 'observer'),
-                onRemove: (a) => _actions(ref)?.removeActor(detail, a),
+                onAdd: canEdit
+                    ? () => _addActor(context, ref, 'observer')
+                    : null,
+                onRemove: canEdit
+                    ? (a) => _actions(ref)?.removeActor(detail, a)
+                    : null,
               ),
               InfoTile(
                 icon: Icons.folder_outlined,
                 label: 'Category',
                 value: detail.categoryName ?? 'None',
-                onTap: () => _editCategory(context, ref),
+                onTap: canEdit ? () => _editCategory(context, ref) : null,
               ),
               // Urgency + Impact are the editable inputs; Priority is derived.
               InfoTile(
                 icon: Icons.priority_high,
                 label: 'Urgency',
                 value: urgencyLabel(detail.urgency),
-                onTap: () => _editUrgency(context, ref),
+                onTap: canEdit ? () => _editUrgency(context, ref) : null,
               ),
               InfoTile(
                 icon: Icons.bolt_outlined,
                 label: 'Impact',
                 value: urgencyLabel(detail.impact),
-                onTap: () => _editImpact(context, ref),
+                onTap: canEdit ? () => _editImpact(context, ref) : null,
               ),
               _PriorityTile(
                 priority: detail.priority,
@@ -446,7 +498,7 @@ class _DetailBody extends ConsumerWidget {
               for (final TimelineEntry e in value)
                 TimelineEntryTile(
                   entry: e,
-                  onToggleTask: e.type == 'task'
+                  onToggleTask: e.type == 'task' && rights.canUpdateTask
                       ? () => _actions(ref)?.toggleTask(detail, e)
                       : null,
                   onReview: _reviewHandler(context, ref, e),
@@ -700,8 +752,8 @@ class _RequesterTile extends StatelessWidget {
     required this.onRemove,
   });
   final TicketDetail detail;
-  final VoidCallback onAdd;
-  final void Function(TicketActor) onRemove;
+  final VoidCallback? onAdd;
+  final void Function(TicketActor)? onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -723,8 +775,8 @@ class _AssignedTile extends StatelessWidget {
     required this.onRemove,
   });
   final TicketDetail detail;
-  final VoidCallback onAdd;
-  final void Function(TicketActor) onRemove;
+  final VoidCallback? onAdd;
+  final void Function(TicketActor)? onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -745,8 +797,8 @@ class _ObserverTile extends StatelessWidget {
     required this.onRemove,
   });
   final TicketDetail detail;
-  final VoidCallback onAdd;
-  final void Function(TicketActor) onRemove;
+  final VoidCallback? onAdd;
+  final void Function(TicketActor)? onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -774,7 +826,10 @@ class _TicketChip extends StatelessWidget {
   });
 
   final String label;
-  final VoidCallback onTap;
+
+  /// Null when the profile may not change this field: the chip still shows
+  /// the value, it just isn't a button.
+  final VoidCallback? onTap;
 
   /// What the chip is showing ("Status", "Type") — the chip's own text is just
   /// the value, so this names the dimension for the tooltip and the reader.
@@ -804,7 +859,7 @@ class _TicketChip extends StatelessWidget {
       label: Text(label),
       // The chip's text is only the value ("New"); the tooltip is what tells a
       // screen reader — and a hesitating thumb — which field it belongs to.
-      tooltip: 'Change ${field.toLowerCase()}',
+      tooltip: onTap == null ? field : 'Change ${field.toLowerCase()}',
       onPressed: onTap,
     );
   }

@@ -24,7 +24,7 @@ connection comes back.
 > means, what was verified and how, and what you should check yourself.
 
 It needs a companion GLPI plugin —
-**[GLPI Mobile Plugin](https://github.com/tankerkiller125/glpi-mobile-plugin)** — which is what
+**[GLPI Mobile Plugin](https://github.com/bijstaan/glpi-mobile-plugin)** — which is what
 makes passwordless pairing, push notifications and the endpoints GLPI's REST API
 doesn't publish possible.
 
@@ -46,7 +46,7 @@ useful, honest about its limits, and looking for real-world feedback.
 | | |
 | --- | --- |
 | **Server** | GLPI **11.0** or newer, with the high-level API enabled (*Setup → General → API*) |
-| **Plugin** | https://github.com/tankerkiller125/glpi-mobile-plugin installed and active |
+| **Plugin** | https://github.com/bijstaan/glpi-mobile-plugin installed and active |
 | **Android** | 7.0+ (API 24). Camera permission for QR pairing; notification permission for push |
 | **iOS** | 15+ (the floor Firebase's iOS SDK sets). Requires a Mac and an Apple developer account to build; APNs for push |
 | **Build** | Flutter 3.44+ / Dart 3.12+, JDK 21, Android SDK with `platforms;android-37.0` |
@@ -57,7 +57,7 @@ useful, honest about its limits, and looking for real-world feedback.
 
 ```sh
 cd /var/www/glpi/plugins
-git clone https://github.com/tankerkiller125/glpi-mobile-plugin.git glpimobile
+git clone https://github.com/bijstaan/glpi-mobile-plugin.git glpimobile
 ```
 
 Then *Setup → Plugins → GLPI Mobile → Install → Enable*. The directory **must**
@@ -67,7 +67,7 @@ live in that repository's README.
 
 ### 2. Install the app
 
-Grab an APK from [Releases](https://github.com/tankerkiller125/glpi-mobile-app/releases),
+Grab an APK from [Releases](https://github.com/bijstaan/glpi-mobile-app/releases),
 or [build it yourself](#building-from-source). There is no Play Store or App
 Store listing yet.
 
@@ -273,6 +273,31 @@ object with search-as-you-type; **reserve** on reservable assets; expiry badges
 on contracts, certificates and licences; and tap-to-call / mail / maps on
 suppliers and contacts.
 
+### What your profile can do
+
+The app shows what your GLPI profile allows and nothing else. Rights come with
+the session (`active_profile.rights` — the same bitmask map GLPI builds its own
+menus from), are re-read on every profile or entity switch, and are cached so
+gating still works offline. Anything unknown is treated as *not allowed*, so a
+technician is never shown a door that answers 403.
+
+That means the drawer only lists the modules you can open — Planning, Projects,
+Knowledge base, Reminders, RSS feeds, Reservations, and the Assets and
+Management hubs each appear only with the matching right, and the hubs list only
+the itemtypes you may read (GLPI's own `/Assets` list is the same for everyone,
+so the filtering is the app's). Tickets, Changes and Problems are separate
+rights in GLPI, so the module switcher offers the ones you hold and moves itself
+off one you have lost. Inside a ticket the same rule applies per action:
+replying, adding a task, taking the ticket (GLPI's *Associate myself* right, and
+only while nobody else has it), editing the assignee field, changing a field,
+writing a solution, requesting an approval, linking an asset, attaching a photo.
+A profile that may only read gets a ticket it can read, without a composer that
+would refuse it.
+
+Answering an approval is the deliberate exception: GLPI lets the person the
+approval was addressed to answer it whatever their rights say, so the app gates
+that on being the approver, exactly as the server does.
+
 ### Server plugins the app can use
 
 Some of what the app offers exists only when the server runs the matching
@@ -453,7 +478,7 @@ EOF
 ### iOS
 
 Building for iOS needs a Mac with Xcode. The APNs plumbing is written
-(`AppDelegate.swift`, a `com.tankerkiller125.glpi/push` method channel,
+(`AppDelegate.swift`, a `com.bijstaan.glpi/push` method channel,
 `Runner.entitlements`, the background mode) but has **not** been built or
 verified on a real device — see [Known limitations](#known-limitations). Enable
 the *Push Notifications* and *Background Modes → Remote notifications*
@@ -508,7 +533,7 @@ and an unsigned IPA rather than failing.
 | `ANDROID_KEYSTORE_BASE64` | `base64 -w0 upload-keystore.jks` |
 | `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_PASSWORD`, `ANDROID_KEY_ALIAS` | the keystore's credentials |
 | `APPLE_CERTIFICATE_BASE64`, `APPLE_CERTIFICATE_PASSWORD` | a distribution `.p12` and its export password |
-| `APPLE_PROVISIONING_PROFILE_BASE64` | a `.mobileprovision` for `com.tankerkiller125.glpi` |
+| `APPLE_PROVISIONING_PROFILE_BASE64` | a `.mobileprovision` for `com.bijstaan.glpi` |
 | `APPLE_TEAM_ID` | your 10-character Apple team id |
 
 Two optional repository *variables* tune the iOS export: `APPLE_EXPORT_METHOD`
@@ -522,7 +547,7 @@ keystore before the first release anyone else installs.
 ## Development
 
 You need a GLPI 11 server with the
-[glpi mobile plugin](https://github.com/tankerkiller125/glpi-mobile-plugin) installed;
+[glpi mobile plugin](https://github.com/bijstaan/glpi-mobile-plugin) installed;
 any instance works. The targets below assume the Dockerised dev instance this
 app was built against, at `http://localhost:8081` — which is
 `http://10.0.2.2:8081` from an Android emulator, since the emulator reaches the
@@ -622,7 +647,7 @@ Please don't file security issues in the public tracker — see
 
 ## License
 
-[MIT](LICENSE) © 2026 tankerkiller125.
+[MIT](LICENSE) © 2026 Bijstaan.
 
 GLPI is a registered trademark of Teclib'. This project is an independent
 client and is not affiliated with or endorsed by Teclib' or the GLPI project.

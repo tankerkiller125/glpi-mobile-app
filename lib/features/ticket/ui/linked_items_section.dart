@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/a11y/contrast.dart';
 import '../../../core/api/itil_type.dart';
 import '../../../core/models/itil_link.dart';
+import '../../../core/models/rights.dart';
 import '../../../core/models/ticket_detail.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
@@ -26,6 +27,8 @@ class LinkedItemsSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final links = ref.watch(itilLinksProvider(item.localId)).value ?? const [];
+    final canLink = (ref.watch(rightsProvider).value ?? Rights.empty)
+        .canUpdateItil(item.itemtype);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,11 +36,13 @@ class LinkedItemsSection extends ConsumerWidget {
         SectionHeading(
           'Linked items',
           count: links.isEmpty ? null : links.length,
-          trailing: TextButton.icon(
-            onPressed: () => _add(context, ref),
-            icon: const Icon(Icons.add_link, size: 18),
-            label: const Text('Link'),
-          ),
+          trailing: canLink
+              ? TextButton.icon(
+                  onPressed: () => _add(context, ref),
+                  icon: const Icon(Icons.add_link, size: 18),
+                  label: const Text('Link'),
+                )
+              : null,
         ),
         if (links.isEmpty)
           Padding(
@@ -50,7 +55,8 @@ class LinkedItemsSection extends ConsumerWidget {
             ),
           )
         else
-          for (final link in links) _LinkTile(item: item, link: link),
+          for (final link in links)
+            _LinkTile(item: item, link: link, canRemove: canLink),
       ],
     );
   }
@@ -72,10 +78,18 @@ class LinkedItemsSection extends ConsumerWidget {
 }
 
 class _LinkTile extends ConsumerWidget {
-  const _LinkTile({required this.item, required this.link});
+  const _LinkTile({
+    required this.item,
+    required this.link,
+    required this.canRemove,
+  });
 
   final TicketDetail item;
   final ItilLink link;
+
+  /// Whether this profile may unlink; the row still opens the object either
+  /// way.
+  final bool canRemove;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -105,13 +119,15 @@ class _LinkTile extends ConsumerWidget {
               : '${link.relationLabel} · ${link.statusLabel}',
           style: theme.textTheme.bodySmall,
         ),
-        trailing: IconButton(
-          // Several of these stack up on a busy ticket; say which one.
-          tooltip: 'Remove link to ${link.typeLabel} ${link.serverId}',
-          icon: const Icon(Icons.link_off, size: 20),
-          onPressed: () =>
-              ref.read(ticketActionsProvider)?.removeLink(item, link),
-        ),
+        trailing: canRemove
+            ? IconButton(
+                // Several of these stack up on a busy ticket; say which one.
+                tooltip: 'Remove link to ${link.typeLabel} ${link.serverId}',
+                icon: const Icon(Icons.link_off, size: 20),
+                onPressed: () =>
+                    ref.read(ticketActionsProvider)?.removeLink(item, link),
+              )
+            : null,
         onTap: link.pending ? null : () => _open(context, ref),
       ),
     );

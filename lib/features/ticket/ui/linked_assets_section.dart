@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/catalog_item.dart';
+import '../../../core/models/rights.dart';
 import '../../../core/models/ticket_detail.dart';
 import '../../../core/providers.dart';
 import '../../../core/utils/layout.dart';
@@ -22,6 +23,8 @@ class LinkedAssetsSection extends ConsumerWidget {
     if (serverId == null) return const SizedBox.shrink();
     final key = (itemtype: item.itemtype, serverId: serverId);
     final assets = ref.watch(itilItemsProvider(key)).value ?? const [];
+    final canLink = (ref.watch(rightsProvider).value ?? Rights.empty)
+        .canUpdateItil(item.itemtype);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -29,11 +32,13 @@ class LinkedAssetsSection extends ConsumerWidget {
         SectionHeading(
           'Assets',
           count: assets.isEmpty ? null : assets.length,
-          trailing: TextButton.icon(
-            onPressed: () => _add(context, ref, serverId),
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('Link asset'),
-          ),
+          trailing: canLink
+              ? TextButton.icon(
+                  onPressed: () => _add(context, ref, serverId),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Link asset'),
+                )
+              : null,
         ),
         if (assets.isEmpty)
           Padding(
@@ -62,22 +67,24 @@ class LinkedAssetsSection extends ConsumerWidget {
                   if (asset.serial.isNotEmpty) asset.serial,
                 ].join(' · '),
               ),
-              trailing: IconButton(
-                icon: const Icon(Icons.link_off, size: 18),
-                tooltip: 'Unlink ${asset.name}',
-                onPressed: () async {
-                  await ref
-                      .read(ticketActionsProvider)
-                      ?.unlinkAssetFromItil(
-                        ownerLocalId: item.localId,
-                        ownerServerId: serverId,
-                        itemtype: item.itemtype,
-                        assetItemtype: asset.itemtype,
-                        assetId: asset.id,
-                      );
-                  ref.invalidate(itilItemsProvider(key));
-                },
-              ),
+              trailing: !canLink
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.link_off, size: 18),
+                      tooltip: 'Unlink ${asset.name}',
+                      onPressed: () async {
+                        await ref
+                            .read(ticketActionsProvider)
+                            ?.unlinkAssetFromItil(
+                              ownerLocalId: item.localId,
+                              ownerServerId: serverId,
+                              itemtype: item.itemtype,
+                              assetItemtype: asset.itemtype,
+                              assetId: asset.id,
+                            );
+                        ref.invalidate(itilItemsProvider(key));
+                      },
+                    ),
             ),
       ],
     );

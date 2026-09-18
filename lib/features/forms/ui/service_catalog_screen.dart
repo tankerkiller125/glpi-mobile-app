@@ -5,11 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api/dto/form_dto.dart';
+import '../../../core/api/itil_type.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/layout.dart';
 import '../../../core/widgets/accessible_refresh.dart';
 import '../../../core/widgets/glpi_illustration.dart';
+import '../../../core/widgets/rights_gate.dart';
 
 /// GLPI's Service Catalog, arranged the way the instance arranged it.
 ///
@@ -80,73 +82,78 @@ class _ServiceCatalogScreenState extends ConsumerState<ServiceCatalogScreen> {
       });
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.title ??
-              page.value?.title.ifEmpty('New request') ??
-              'New request',
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            child: Semantics(
-              label: 'Search the service catalog',
-              textField: true,
-              child: TextField(
-                controller: _search,
-                onChanged: _onSearch,
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  hintText: 'Search forms…',
-                  isDense: true,
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _search.text.isEmpty
-                      ? null
-                      : IconButton(
-                          tooltip: 'Clear the search',
-                          icon: const Icon(Icons.close),
-                          onPressed: () {
-                            _search.clear();
-                            _onSearch('');
-                          },
-                        ),
-                  border: const OutlineInputBorder(),
+    return RightsGate(
+      allows: (r) => r.canCreateItil(itilTicket),
+      title: 'New ticket',
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            widget.title ??
+                page.value?.title.ifEmpty('New request') ??
+                'New request',
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: Semantics(
+                label: 'Search the service catalog',
+                textField: true,
+                child: TextField(
+                  controller: _search,
+                  onChanged: _onSearch,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: 'Search forms…',
+                    isDense: true,
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _search.text.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: 'Clear the search',
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              _search.clear();
+                              _onSearch('');
+                            },
+                          ),
+                    border: const OutlineInputBorder(),
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
-      body: switch (page) {
-        AsyncData(:final value) when value.isEmpty => _Empty(
-          message: _filter.isNotEmpty
-              ? 'Nothing in the catalog matches “$_filter”.'
-              : null,
-          onRetry: () => ref.invalidate(serviceCatalogProvider(_query)),
-          // Nothing published at all — offer the plain ticket form rather than
-          // leaving the technician at a dead end.
-          onFallback: _filter.isEmpty && widget.categoryId == 0
-              ? () => context.push(Routes.createTicket)
-              : null,
-        ),
-        AsyncData(:final value) => AccessibleRefresh(
-          onRefresh: () async => ref.invalidate(serviceCatalogProvider(_query)),
-          child: ReadableWidth(
-            child: _CatalogList(page: value, searching: _filter.isNotEmpty),
+        body: switch (page) {
+          AsyncData(:final value) when value.isEmpty => _Empty(
+            message: _filter.isNotEmpty
+                ? 'Nothing in the catalog matches “$_filter”.'
+                : null,
+            onRetry: () => ref.invalidate(serviceCatalogProvider(_query)),
+            // Nothing published at all — offer the plain ticket form rather than
+            // leaving the technician at a dead end.
+            onFallback: _filter.isEmpty && widget.categoryId == 0
+                ? () => context.push(Routes.createTicket)
+                : null,
           ),
-        ),
-        AsyncError() => _Empty(
-          message:
-              'Could not load the service catalog. Check your connection and '
-              'try again.',
-          onRetry: () => ref.invalidate(serviceCatalogProvider(_query)),
-        ),
-        _ => const Center(
-          child: CircularProgressIndicator(semanticsLabel: 'Loading'),
-        ),
-      },
+          AsyncData(:final value) => AccessibleRefresh(
+            onRefresh: () async =>
+                ref.invalidate(serviceCatalogProvider(_query)),
+            child: ReadableWidth(
+              child: _CatalogList(page: value, searching: _filter.isNotEmpty),
+            ),
+          ),
+          AsyncError() => _Empty(
+            message:
+                'Could not load the service catalog. Check your connection and '
+                'try again.',
+            onRetry: () => ref.invalidate(serviceCatalogProvider(_query)),
+          ),
+          _ => const Center(
+            child: CircularProgressIndicator(semanticsLabel: 'Loading'),
+          ),
+        },
+      ),
     );
   }
 }

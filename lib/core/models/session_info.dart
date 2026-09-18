@@ -1,3 +1,5 @@
+import 'rights.dart';
+
 /// Parsed subset of `GET /api.php/v2.3/session`.
 ///
 /// Note: `/Administration/User/Me` does NOT include group membership, but this
@@ -11,6 +13,7 @@ class SessionInfo {
     required this.groupIds,
     required this.profiles,
     required this.activeProfileId,
+    required this.rights,
   });
 
   final int userId;
@@ -19,6 +22,10 @@ class SessionInfo {
   final List<int> groupIds;
   final List<SessionProfile> profiles;
   final int? activeProfileId;
+
+  /// What the *active* profile may do, in this entity — the source the UI
+  /// gates menus and actions on.
+  final Rights rights;
 
   factory SessionInfo.fromJson(Map<String, Object?> json) {
     final profilesRaw = json['profiles'] as Map<String, Object?>? ?? const {};
@@ -45,6 +52,7 @@ class SessionInfo {
               .toList()
             ..sort((a, b) => a.name.compareTo(b.name)),
       activeProfileId: (active?['id'] as num?)?.toInt(),
+      rights: Rights.fromSessionJson(json),
     );
   }
 }

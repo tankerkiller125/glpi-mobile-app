@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/models/catalog_item.dart';
+import '../../../core/models/rights.dart';
 import '../../../core/providers.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/utils/formatting.dart';
@@ -16,6 +17,7 @@ import '../../../core/utils/html_text.dart';
 import '../../../core/widgets/accessible_refresh.dart';
 import '../../../core/widgets/due_badge.dart';
 import '../../../core/widgets/info_tile.dart';
+import '../../../core/widgets/rights_gate.dart';
 import '../../../core/widgets/section_heading.dart';
 import '../../ticket/ui/attachments_section.dart';
 import '../../ticket/ui/compose_sheet.dart';
@@ -57,6 +59,9 @@ class _CatalogDetailScreenState extends ConsumerState<CatalogDetailScreen> {
       ..watch(assetStatusesProvider)
       ..watch(locationsProvider);
     final item = ref.watch(catalogItemProvider(widget.localId)).value;
+    // Raising a ticket about the asset is a ticket right, not an asset one.
+    final canOpenTicket = (ref.watch(rightsProvider).value ?? Rights.empty)
+        .canCreateItil('Ticket');
     if (item == null) {
       return const Scaffold(
         body: Center(
@@ -77,79 +82,86 @@ class _CatalogDetailScreenState extends ConsumerState<CatalogDetailScreen> {
       unawaited(_refreshAttachments(item));
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(item.displayName, overflow: TextOverflow.ellipsis),
-        actions: [
-          if (item.pending)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+    return RightsGate(
+      allows: (r) => r.canReadItemtype(widget.itemtype),
+      title: widget.itemtype,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(item.displayName, overflow: TextOverflow.ellipsis),
+          actions: [
+            if (item.pending)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Center(
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 ),
               ),
-            ),
-        ],
-      ),
-      body: AccessibleRefresh(
-        onRefresh: () async {
-          ref.invalidate(
-            catalogDetailLoadProvider((
-              domain: widget.domain,
-              itemtype: widget.itemtype,
-              serverId: item.serverId,
-            )),
-          );
-          if (_isAsset) {
-            final ref_ = (itemtype: widget.itemtype, serverId: item.serverId);
-            ref
-              ..invalidate(assetPortsProvider(ref_))
-              ..invalidate(assetSoftwareProvider(ref_))
-              ..invalidate(assetItilProvider(ref_));
-          }
-          await _refreshAttachments(item);
-        },
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-          children: [
-            _identity(item),
-            _reserve(item),
-            const Divider(height: 24),
-            if (_isAsset) ...[
-              _InfocomSection(item: item),
-              _PortsSection(itemtype: widget.itemtype, serverId: item.serverId),
-              if (widget.itemtype == 'Computer')
-                _SoftwareSection(
+          ],
+        ),
+        body: AccessibleRefresh(
+          onRefresh: () async {
+            ref.invalidate(
+              catalogDetailLoadProvider((
+                domain: widget.domain,
+                itemtype: widget.itemtype,
+                serverId: item.serverId,
+              )),
+            );
+            if (_isAsset) {
+              final ref_ = (itemtype: widget.itemtype, serverId: item.serverId);
+              ref
+                ..invalidate(assetPortsProvider(ref_))
+                ..invalidate(assetSoftwareProvider(ref_))
+                ..invalidate(assetItilProvider(ref_));
+            }
+            await _refreshAttachments(item);
+          },
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+            children: [
+              _identity(item),
+              _reserve(item),
+              const Divider(height: 24),
+              if (_isAsset) ...[
+                _InfocomSection(item: item),
+                _PortsSection(
                   itemtype: widget.itemtype,
                   serverId: item.serverId,
                 ),
-              _ItilSection(item: item),
-            ] else ...[
-              if (widget.itemtype == 'Document') _DocumentSection(item: item),
-              _ValiditySection(item: item),
-              _ContactSection(item: item),
+                if (widget.itemtype == 'Computer')
+                  _SoftwareSection(
+                    itemtype: widget.itemtype,
+                    serverId: item.serverId,
+                  ),
+                _ItilSection(item: item),
+              ] else ...[
+                if (widget.itemtype == 'Document') _DocumentSection(item: item),
+                _ValiditySection(item: item),
+                _ContactSection(item: item),
+              ],
+              const SizedBox(height: 8),
+              AttachmentsSection(
+                ownerLocalId: item.localId,
+                ownerServerId: item.serverId,
+                itemtype: item.itemtype,
+              ),
+              const SizedBox(height: 16),
+              _OtherFieldsSection(item: item),
             ],
-            const SizedBox(height: 8),
-            AttachmentsSection(
-              ownerLocalId: item.localId,
-              ownerServerId: item.serverId,
-              itemtype: item.itemtype,
-            ),
-            const SizedBox(height: 16),
-            _OtherFieldsSection(item: item),
-          ],
+          ),
         ),
+        floatingActionButton: _isAsset && canOpenTicket
+            ? FloatingActionButton.extended(
+                onPressed: () => _createTicket(item),
+                icon: const Icon(Icons.add_task),
+                label: const Text('New ticket'),
+              )
+            : null,
       ),
-      floatingActionButton: _isAsset
-          ? FloatingActionButton.extended(
-              onPressed: () => _createTicket(item),
-              icon: const Icon(Icons.add_task),
-              label: const Text('New ticket'),
-            )
-          : null,
     );
   }
 
@@ -179,6 +191,9 @@ class _CatalogDetailScreenState extends ConsumerState<CatalogDetailScreen> {
         )
         .firstOrNull;
     if (match == null) return const SizedBox.shrink();
+    final canBook =
+        (ref.watch(rightsProvider).value ?? Rights.empty).canBookReservations;
+    if (!canBook) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Align(
@@ -193,6 +208,10 @@ class _CatalogDetailScreenState extends ConsumerState<CatalogDetailScreen> {
   }
 
   Widget _identity(CatalogItem item) {
+    // Editing in the field needs UPDATE on the itemtype; a read-only profile
+    // gets the same rows without the tap target.
+    final canEdit = (ref.watch(rightsProvider).value ?? Rights.empty)
+        .canUpdateItemtype(item.itemtype);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -229,21 +248,21 @@ class _CatalogDetailScreenState extends ConsumerState<CatalogDetailScreen> {
             icon: Icons.flag_outlined,
             label: 'Status',
             value: item.statusName ?? 'Not set',
-            onTap: () => _editStatus(item),
+            onTap: canEdit ? () => _editStatus(item) : null,
           ),
         if (item.fields.containsKey('location'))
           InfoTile(
             icon: Icons.place_outlined,
             label: 'Location',
             value: item.locationName ?? 'Not set',
-            onTap: () => _editLocation(item),
+            onTap: canEdit ? () => _editLocation(item) : null,
           ),
         if (item.fields.containsKey('user'))
           InfoTile(
             icon: Icons.person_outline,
             label: 'User',
             value: item.userName ?? 'Not set',
-            onTap: () => _editUser(item),
+            onTap: canEdit ? () => _editUser(item) : null,
           ),
         if ((item.groupName ?? '').isNotEmpty)
           InfoTile(
@@ -260,8 +279,10 @@ class _CatalogDetailScreenState extends ConsumerState<CatalogDetailScreen> {
         InfoTile(
           icon: Icons.notes_outlined,
           label: 'Comment',
-          value: (item.comment ?? '').isEmpty ? 'Add a note' : item.comment!,
-          onTap: () => _editComment(item),
+          value: (item.comment ?? '').isEmpty
+              ? (canEdit ? 'Add a note' : 'Not set')
+              : item.comment!,
+          onTap: canEdit ? () => _editComment(item) : null,
         ),
       ],
     );

@@ -23,6 +23,7 @@ import 'models/itil_link.dart';
 import 'models/planning_event.dart';
 import 'models/project.dart';
 import 'models/reminder.dart';
+import 'models/rights.dart';
 import 'models/session_info.dart';
 import 'models/ticket_detail.dart';
 import 'models/ticket_list_item.dart';
@@ -152,11 +153,14 @@ final catalogSearchProvider =
     FutureProvider.family<List<CatalogItem>, CatalogSearch>((ref, s) async {
       final repo = ref.watch(catalogRepositoryProvider);
       if (repo == null) return const [];
-      return repo.searchAcross(
-        s.domain,
-        s.domain == 'Assets' ? primaryAssetTypes : managementTier1,
-        s.query,
-      );
+      // Searching an itemtype the profile can't read is a guaranteed 403 per
+      // request, and the hub doesn't offer those types either.
+      final rights = ref.watch(rightsProvider).value ?? Rights.empty;
+      final types = (s.domain == 'Assets' ? primaryAssetTypes : managementTier1)
+          .where(rights.canReadItemtype)
+          .toList();
+      if (types.isEmpty) return const [];
+      return repo.searchAcross(s.domain, types, s.query);
     });
 
 /// Loads a record's full payload (+ Infocom) into the cache, then the
@@ -671,6 +675,46 @@ final capabilitiesProvider = FutureProvider<Capabilities>((ref) async {
     return Capabilities.fromJson(jsonDecode(row.value));
   } on Exception {
     return Capabilities.empty;
+  }
+});
+
+/// What the active profile may do (`GET /session`'s `active_profile.rights`).
+/// Menus, hubs and write actions gate on this, so a technician is never shown
+/// a door that answers 403.
+///
+/// Cached in [AppConfig] like the capability map, because the drawer renders
+/// offline too. Every failure path denies rather than allows: a fetch error
+/// falls back to the last-known map, and an empty cache to [Rights.empty],
+/// which hides everything optional. Re-fetched on login and on every
+/// profile/entity switch — the rights are the *profile's*, and switching
+/// profile is exactly how they change.
+final rightsProvider = FutureProvider<Rights>((ref) async {
+  final db = ref.watch(databaseProvider);
+  const key = 'rights';
+  try {
+    final session = await ref.watch(sessionInfoProvider.future);
+    if (session != null) {
+      await db
+          .into(db.appConfig)
+          .insertOnConflictUpdate(
+            AppConfigCompanion.insert(
+              key: key,
+              value: jsonEncode(session.rights.toJson()),
+            ),
+          );
+      return session.rights;
+    }
+  } on Exception {
+    // Offline or a transient failure — fall through to the cache.
+  }
+  final row = await (db.select(
+    db.appConfig,
+  )..where((c) => c.key.equals(key))).getSingleOrNull();
+  if (row == null) return Rights.empty;
+  try {
+    return Rights.fromJson(jsonDecode(row.value));
+  } on Exception {
+    return Rights.empty;
   }
 });
 

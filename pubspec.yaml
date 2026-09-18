@@ -1,8 +1,8 @@
 name: glpi_mobile
 description: "Offline-first mobile client for GLPI 11 — helpdesk, assets and planning for technicians in the field."
-homepage: https://github.com/tankerkiller125/glpi-mobile-app
-repository: https://github.com/tankerkiller125/glpi-mobile-app
-issue_tracker: https://github.com/tankerkiller125/glpi-mobile-app/issues
+homepage: https://github.com/bijstaan/glpi-mobile-app
+repository: https://github.com/bijstaan/glpi-mobile-app
+issue_tracker: https://github.com/bijstaan/glpi-mobile-app/issues
 publish_to: 'none'
 version: 0.4.0
 
