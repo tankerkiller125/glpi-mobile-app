@@ -195,11 +195,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('MSP Gold'), findsOneWidget);
-      expect(find.text('12 of 40 h used'), findsOneWidget);
-      expect(find.text('bills this ticket'), findsOneWidget);
-      expect(find.textContaining('Contract lapsed: Old Deal'), findsOneWidget);
-      // Fresh data carries no stale note.
-      expect(find.textContaining('could not be reached'), findsNothing);
+      expect(find.text('12 of 40 hours used'), findsOneWidget);
+      expect(find.text('Bills this ticket'), findsOneWidget);
+      expect(
+        find.textContaining('Old Deal (Fixed Fee) ran out on 2026-06-30'),
+        findsOneWidget,
+      );
+      // Fresh data carries no age note — that line is `entitleStale`, and it
+      // is the whole of what distinguishes this from the stale case below.
+      expect(find.textContaining('Answered'), findsNothing);
     });
 
     testWidgets('states the age honestly when stale', (tester) async {
@@ -225,7 +229,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('As of 2h ago'), findsOneWidget);
+      expect(find.textContaining('Answered 2h ago'), findsOneWidget);
     });
 
     testWidgets('silent renders nothing at all', (tester) async {
@@ -238,7 +242,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Contract'), findsNothing);
+      // The card's own heading: naming anything else here is an assertion
+      // that passes whether or not the card rendered.
+      expect(find.text('Cover'), findsNothing);
     });
 
     testWidgets('missing capability renders nothing', (tester) async {
@@ -278,8 +284,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('No active contract'), findsOneWidget);
-      expect(find.textContaining('Responses blocked'), findsOneWidget);
+      expect(
+        find.textContaining('No contract covers this entity'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('This work is not covered'), findsOneWidget);
     });
   });
 
@@ -434,7 +443,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Schedule & risk'), findsOneWidget);
+      expect(find.text('Schedule'), findsOneWidget);
       expect(find.textContaining('Planned dates'), findsOneWidget);
       expect(find.textContaining('Quarter close'), findsOneWidget);
       expect(find.textContaining('Change #275'), findsOneWidget);
@@ -451,7 +460,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Schedule & risk'), findsNothing);
+      expect(find.text('Schedule'), findsNothing);
     });
   });
 
@@ -512,7 +521,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.textContaining('Falls inside change freeze: Quarter close'),
+        find.textContaining('Inside the Quarter close freeze'),
         findsOneWidget,
       );
     });
@@ -530,7 +539,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('change freeze'), findsNothing);
+      expect(find.textContaining('freeze'), findsNothing);
     });
   });
 }

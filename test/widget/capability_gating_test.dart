@@ -187,8 +187,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('RAID degraded'), findsOneWidget);
-      // The on-call card highlights the signed-in user's duty.
-      expect(find.text('You are on call'), findsOneWidget);
+      // The on-call card, and the rota row reading "You" rather than the
+      // name — which is the whole of how it highlights the reader's duty.
+      expect(find.text('On call'), findsOneWidget);
+      expect(find.text('Infra'), findsOneWidget);
+      expect(find.text('You'), findsOneWidget);
       expect(find.text('Not available'), findsNothing);
     });
   });
